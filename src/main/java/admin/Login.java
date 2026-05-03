@@ -110,7 +110,6 @@ public class Login extends javax.swing.JFrame {
         jLabel3.setText("PASSWORD :");
         jLabel3.setPreferredSize(new java.awt.Dimension(100, 25));
 
-        jTextField1.setText("jTextField1");
         jTextField1.setPreferredSize(new java.awt.Dimension(220, 30));
 
         jPasswordField1.setText("jPasswordField1");
