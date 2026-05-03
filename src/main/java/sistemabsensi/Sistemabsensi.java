@@ -1,7 +1,6 @@
 /*
  * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
  */
-
 package sistemabsensi;
 
 import sistemabsensi.objects.pesertadidik;
@@ -13,12 +12,12 @@ import sistemabsensi.objects.pesertadidik;
 public class Sistemabsensi {
 
     public static void main(String[] args) {
-        pesertadidik s = new pesertadidik();
-        s.setUidRfid("1234567");
-        s.setIdsiswa("12");
-        s.setNamaLengkap("fakhri");
-        s.setKelas("X-1");
-        
-        System.err.println(s.toString());
+        pesertadidik PD = new pesertadidik();
+        if (PD instanceof pesertadidik) {
+            System.err.println("Karyawan");
+        } else {
+            System.err.println("Something else");
+        }// //
+        // //
     }
 }
