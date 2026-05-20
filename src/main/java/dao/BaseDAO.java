@@ -2,7 +2,7 @@
  * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
  * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Interface.java to edit this template
  */
-package sistemabsensi.objects;
+package dao;
 
 import java.util.List;
 import org.bson.conversions.Bson;
@@ -12,9 +12,9 @@ import org.bson.conversions.Bson;
  */
 public interface BaseDAO<T> {
     // Operasi CRUD Dasar
-    void save(T entity);
-    void update(Bson filter, T entity);
-    void delete(Bson filter);
+    void save(T entity); // untuk membuat
+    void update(Bson filter, T entity); // untuk update
+    void delete(Bson filter); // untuk delete
     
     // Operasi Searching/Reading
     List<T> findAll();
