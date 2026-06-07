@@ -30,16 +30,16 @@ public class Adminpanel extends javax.swing.JFrame {
             bottompanel.setPreferredSize(new Dimension(260, 300));
 
             toppanel.removeAll();
-            toppanel.add(new SidebarMenuPanel(), BorderLayout.CENTER);
             toppanel.setLayout(new BorderLayout());
+            toppanel.add(new SidebarMenuPanel(), BorderLayout.CENTER);
             System.out.println("✅ SidebarMenuPanel created");
             toppanel.revalidate();
             toppanel.repaint();
             System.out.println("✅ SidebarMenuPanel added to toppanel");
 
             bottompanel.removeAll();
-            bottompanel.add(SidebarCrudPanel.getInstance(), BorderLayout.CENTER);
             bottompanel.setLayout(new BorderLayout());
+            bottompanel.add(SidebarCrudPanel.getInstance(), BorderLayout.CENTER);
             System.out.println("✅ SidebarCrudPanel created");
             bottompanel.revalidate();
             bottompanel.repaint();

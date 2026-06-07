@@ -17,6 +17,8 @@ import java.awt.event.KeyEvent;
  */
 public class PesertaDidikModule implements MasterDataModule {
     
+    private final service.pesertadidikservice pesertaService = new service.pesertadidikservice();
+    
     // CRUD Components
     private JTextField txtUID;
     private JTextField txtIdPeserta;
@@ -30,7 +32,7 @@ public class PesertaDidikModule implements MasterDataModule {
     
     // Table
     private JPanel tablePanel;
-    private JTable tabelPeserta;
+    private JPanel cardsContainerPanel;
     
     @Override
     public String getModuleName() {
@@ -151,37 +153,153 @@ public class PesertaDidikModule implements MasterDataModule {
         tablePanel = new JPanel(new BorderLayout());
         tablePanel.setBackground(Color.WHITE);
         
-        // Header
+        // Header Judul Atas
         JPanel headerPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
         headerPanel.setBackground(Color.WHITE);
-        JLabel headerLabel = new JLabel("Data Peserta Didik");
-        headerLabel.setFont(new Font("Segoe UI", Font.BOLD, 14));
+        JLabel headerLabel = new JLabel("Daftar Kartu Peserta Didik");
+        headerLabel.setFont(new Font("Segoe UI", Font.BOLD, 16));
         headerPanel.add(headerLabel);
         tablePanel.add(headerPanel, BorderLayout.PAGE_START);
         
-        // Table
-        tabelPeserta = new JTable();
-        tabelPeserta.setFont(new Font("Segoe UI", Font.PLAIN, 12));
-        tabelPeserta.setRowHeight(25);
-        JScrollPane scrollPane = new JScrollPane(tabelPeserta);
+        // Panel khusus penampung kartu-kartu siswa (Susunan Grid: baris dinamis, 3 kolom)
+        cardsContainerPanel = new JPanel(new GridLayout(0, 2, 15, 15)); 
+        cardsContainerPanel.setBackground(new Color(245, 245, 245)); // Beri warna background abu soft
+        cardsContainerPanel.setBorder(BorderFactory.createEmptyBorder(15, 15, 15, 15));
+
+        // Bungkus kartu di dalam JScrollPane agar kalau siswanya banyak bisa di-scroll ke bawah
+        JScrollPane scrollPane = new JScrollPane(cardsContainerPanel);
+        scrollPane.setBorder(BorderFactory.createEmptyBorder());
+        
+        scrollPane.getVerticalScrollBar().setUnitIncrement(16); // Agar scroll-nya smooth
+        
         tablePanel.add(scrollPane, BorderLayout.CENTER);
         
-        loadTableData();
+        loadTableData(); // Panggil pengisi data kartu
         return tablePanel;
     }
     
     @Override
     public void loadTableData() {
-        String keyword = txtSearch.getText();
+        if (cardsContainerPanel == null) return;
         
-        // Dummy data - ganti dengan service yang sebenarnya
-        DefaultTableModel model = new DefaultTableModel();
-        model.addColumn("UID");
-        model.addColumn("ID Peserta");
-        model.addColumn("Nama");
-        model.addColumn("Kelas");
-        
-        tabelPeserta.setModel(model);
+        // 1. Bersihkan kontainer dan atur layout Grid (2 Kolom)
+        cardsContainerPanel.removeAll();
+        cardsContainerPanel.setLayout(new GridLayout(0, 2, 15, 15)); 
+        cardsContainerPanel.setBackground(Color.WHITE);
+
+        // 2. Ambil kata kunci dari kolom pencarian (jika ada)
+        String keyword = txtSearch.getText().trim();
+        java.util.List<objects.pesertadidik> daftarSiswa;
+
+        // 3. Ambil data dari database
+        if (keyword.isEmpty()) {
+            daftarSiswa = pesertaService.ambilSemuaPeserta();
+        } else {
+            daftarSiswa = pesertaService.cariByNama(keyword);
+        }
+
+        // 4. Render Data
+        if (daftarSiswa.isEmpty()) {
+            cardsContainerPanel.setLayout(new BorderLayout()); // Ubah layout sementara
+            JLabel lblKosong = new JLabel("Data peserta didik tidak ditemukan.", SwingConstants.CENTER);
+            lblKosong.setFont(new java.awt.Font("Segoe UI", java.awt.Font.ITALIC, 14));
+            lblKosong.setForeground(Color.GRAY);
+            cardsContainerPanel.add(lblKosong, BorderLayout.CENTER);
+        } else {
+            // LOOP DARI DATABASE
+            for (objects.pesertadidik siswa : daftarSiswa) {
+                String uid = siswa.getUidRfid();
+                String nama = siswa.getNamaLengkap();
+                String kelas = siswa.getKelas();
+                String idsiswa = siswa.getIdsiswa();
+
+                // Bikin card utama
+                JPanel card = new JPanel();
+                card.setBackground(Color.WHITE);
+                card.setBorder(BorderFactory.createCompoundBorder(
+                    BorderFactory.createLineBorder(new Color(200, 200, 200), 1, true),
+                    BorderFactory.createEmptyBorder(5, 5, 5, 5)
+                ));
+                card.setLayout(new BorderLayout());
+
+                // PANEL DATA (Bagian Teks)
+                JPanel dataPanel = new JPanel();
+                dataPanel.setBackground(Color.WHITE);
+                dataPanel.setLayout(new GridLayout(3, 1, 0, 5));
+                dataPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+
+                JLabel lbNama = new JLabel("Nama : " + (nama != null ? nama : "-"));
+                lbNama.setFont(new java.awt.Font("Segoe UI", java.awt.Font.BOLD, 14));
+                
+                JLabel lbUID = new JLabel("UID : " + (uid != null ? uid : "-"));
+                JLabel lbKelas = new JLabel("Kelas : " + (kelas != null ? kelas : "-"));
+
+                dataPanel.add(lbNama);
+                dataPanel.add(lbUID);
+                dataPanel.add(lbKelas);
+
+                // PANEL TOMBOL
+                JPanel actionPanel = new JPanel();
+                actionPanel.setBackground(Color.WHITE);
+                actionPanel.setLayout(new FlowLayout(FlowLayout.RIGHT));
+
+                JButton btnEdit = new JButton("Edit");
+                JButton btnDelete = new JButton("Delete");
+
+                btnEdit.setBackground(new Color(255, 153, 0));
+                btnEdit.setForeground(Color.WHITE);
+                btnDelete.setBackground(new Color(220, 53, 69));
+                btnDelete.setForeground(Color.WHITE);
+
+                // ===== EVENT EDIT =====
+                btnEdit.addActionListener(e -> {
+                    // PENTING: Ganti "txtUid", "txtIdSiswa" dengan nama variabel 
+                    // textfield input form yang ada di dalam PesertaDidikModule kamu!
+                    
+                    /* CONTOH:
+                    txtUid.setText(uid);
+                    txtIdSiswa.setText(idsiswa);
+                    txtIdSiswa.setEditable(false);
+                    txtNama.setText(nama);
+                    txtKelas.setText(kelas);
+                    
+                    btnUpdate.setEnabled(true);
+                    btnTambah.setEnabled(false);
+                    */
+                    System.out.println("Tombol Edit ditekan untuk: " + nama);
+                });
+
+                // ===== EVENT DELETE =====
+                btnDelete.addActionListener(e -> {
+                    int confirm = JOptionPane.showConfirmDialog(
+                            cardsContainerPanel,
+                            "Yakin ingin menghapus data " + nama + "?",
+                            "Konfirmasi",
+                            JOptionPane.YES_NO_OPTION
+                    );
+
+                    if (confirm == JOptionPane.YES_OPTION) {
+                        pesertaService.hapusPesertaDidik(idsiswa);
+                        loadTableData(); // Refresh UI Module dengan memanggil dirinya sendiri
+                        JOptionPane.showMessageDialog(cardsContainerPanel, "Data berhasil dihapus!");
+                    }
+                });
+
+                actionPanel.add(btnEdit);
+                actionPanel.add(btnDelete);
+
+                // Masukkan panel data dan tombol ke dalam card
+                card.add(dataPanel, BorderLayout.CENTER);
+                card.add(actionPanel, BorderLayout.SOUTH);
+
+                // Masukkan card ke penampung utama (cardsContainerPanel)
+                cardsContainerPanel.add(card);
+            }
+        }
+
+        // 5. Refresh Layar
+        cardsContainerPanel.revalidate();
+        cardsContainerPanel.repaint();
     }
     
     @Override

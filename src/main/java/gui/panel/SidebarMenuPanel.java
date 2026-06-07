@@ -29,12 +29,25 @@ public class SidebarMenuPanel extends JPanel {
         setPreferredSize(new Dimension(260, 200));
 
         String[] menus = {"Guru", "Peserta Didik", "Kelas", "Jam Pelajaran"};
+        JButton defaultBtn = null;
 
         for (String menu : menus) {
             JButton btn = createMenuButton(menu);
             btn.setPreferredSize(new Dimension(100, 40));
             add(btn);
             System.out.println("✅ Button added: " + menu);
+            
+            if (menu.equals("Peserta Didik")) {
+                defaultBtn = btn;
+            }
+        }
+        
+        if (defaultBtn != null) {
+            final JButton btnToClick = defaultBtn;
+            // Gunakan invokeLater agar dipanggil setelah seluruh Adminpanel selesai loading
+            SwingUtilities.invokeLater(() -> {
+                btnToClick.doClick(); 
+            });
         }
     }
 
@@ -72,6 +85,7 @@ public class SidebarMenuPanel extends JPanel {
     }
 
     private void switchModule(String moduleName, JButton btn) {
+        System.out.println("====== 🟢 TRACE: switchModule dipicu untuk " + moduleName + " ======");
         // Reset previous active button
         if (activeButton != null) {
             activeButton.setBackground(BUTTON_BG);
@@ -85,19 +99,43 @@ public class SidebarMenuPanel extends JPanel {
         MasterDataModule module = ModuleFactory.getModule(moduleName);
         
         if (module != null) {
+            System.out.println("   -> Modul berhasil diambil dari Factory");
             // Update CRUD panel
-            SidebarCrudPanel.getInstance().setModule(module);
+            // Cek apakah Instance CRUD panel aman
+            if(SidebarCrudPanel.getInstance() != null) {
+                SidebarCrudPanel.getInstance().setModule(module);
+                System.out.println("   -> setModule() ke SidebarCrudPanel sukses");
+            } else {
+                System.out.println("   -> ❌ ERROR: SidebarCrudPanel.getInstance() bernilai NULL!");
+            } 
             
             // Update content panel
             updateContentPanel(module.getTablePanel());
         }
+        
+        else {
+            System.out.println("   -> ❌ ERROR: Modul " + moduleName + " tidak ditemukan di ModuleFactory!");
+        }
     }
     
     private void updateContentPanel(JPanel newContent) {
+        if (Adminpanel.jPanel3 == null) {
+            System.out.println("   -> ❌ ERROR: Adminpanel.jPanel3 masih NULL saat mau diisi!");
+            return;
+        }
+        
+        
+        System.out.println("   -> Memulai proses inject panel ke jPanel3...");
         // ← FIX: appContentPane jadi jPanel3
+        
+        Adminpanel.jPanel3.setLayout(new BorderLayout());
         Adminpanel.jPanel3.removeAll();
         Adminpanel.jPanel3.add(newContent, BorderLayout.CENTER);
+        // testing
+        // Adminpanel.jPanel3.add(new JButton("TES: JIKAP PANEL INI MUNCUL, ARTINYA JPANEL3 AMAN"), BorderLayout.CENTER);
+        
         Adminpanel.jPanel3.revalidate();
         Adminpanel.jPanel3.repaint();
+        System.out.println("====== 🏁 TRACE: Selesai Render Modul ======");
     }
 }
