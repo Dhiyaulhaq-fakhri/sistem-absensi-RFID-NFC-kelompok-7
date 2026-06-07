@@ -4,6 +4,8 @@
  */
 package gui;
 
+import util.EncryptionUtils;
+import util.SecurityUtils;
 /**
  *
  * @author Lenovo
@@ -124,6 +126,11 @@ public class Login extends javax.swing.JFrame {
 
         jButton2.setText("LOGIN");
         jButton2.setPreferredSize(new java.awt.Dimension(110, 35));
+        jButton2.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButton2ActionPerformed(evt);
+            }
+        });
 
         javax.swing.GroupLayout jPanel3Layout = new javax.swing.GroupLayout(jPanel3);
         jPanel3.setLayout(jPanel3Layout);
@@ -209,6 +216,26 @@ public class Login extends javax.swing.JFrame {
     private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
         // TODO add your handling code here:
     }//GEN-LAST:event_jButton1ActionPerformed
+
+    private void jButton2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton2ActionPerformed
+String username = jTextField1.getText();
+    String password = String.valueOf(jPasswordField1.getPassword());
+
+    String encryptedPassword = EncryptionUtils.encrypt(password);
+
+    String hashPassword = SecurityUtils.getHash(
+            password,
+            SecurityUtils.SHA_256
+    );
+
+    javax.swing.JOptionPane.showMessageDialog(
+       this,
+        "Username : " + username +
+        "\nAES : " + encryptedPassword +
+        "\nSHA-256 : " + hashPassword
+    );
+   // TODO add your handling code here:
+    }//GEN-LAST:event_jButton2ActionPerformed
 
     /**
      * @param args the command line arguments
