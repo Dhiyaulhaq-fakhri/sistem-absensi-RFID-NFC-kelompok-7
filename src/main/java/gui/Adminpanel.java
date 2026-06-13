@@ -26,30 +26,46 @@ public class Adminpanel extends javax.swing.JFrame {
         initComponents();
 
         try {
-            toppanel.setPreferredSize(new Dimension(260, 250));
-            bottompanel.setPreferredSize(new Dimension(260, 300));
+            // Kunci ukuran tinggi ideal untuk wilayah atas dan bawah kiri
+            toppanel.setPreferredSize(new Dimension(260, 320));
+            bottompanel.setPreferredSize(new Dimension(260, 280));
 
+            // ==================== SETTING TOP PANEL (MENU ACCORDION) ====================
             toppanel.removeAll();
             toppanel.setLayout(new BorderLayout());
-            toppanel.add(new SidebarMenuPanel(), BorderLayout.CENTER);
-            System.out.println("✅ SidebarMenuPanel created");
+            
+            // Instance objek menu accordion kita
+            SidebarMenuPanel menuPanel = new SidebarMenuPanel();
+            
+            // BUNGKUS DENGAN SCROLLPANE agar aman kalau menu dibuka lebar-lebar
+            JScrollPane menuScroll = new JScrollPane(menuPanel);
+            menuScroll.setBorder(javax.swing.BorderFactory.createEmptyBorder());
+            menuScroll.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+            menuScroll.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
+            menuScroll.getVerticalScrollBar().setUnitIncrement(14); // Gerakan scroll lancar
+            
+            // Samakan background scrollpane dengan warna gelap tema
+            menuScroll.setBackground(new Color(33, 37, 41));
+            menuScroll.getViewport().setBackground(new Color(33, 37, 41));
+            
+            toppanel.add(menuScroll, BorderLayout.CENTER);
             toppanel.revalidate();
             toppanel.repaint();
-            System.out.println("✅ SidebarMenuPanel added to toppanel");
 
+            // ==================== SETTING BOTTOM PANEL (CRUD FORM) ====================
             bottompanel.removeAll();
             bottompanel.setLayout(new BorderLayout());
             bottompanel.add(SidebarCrudPanel.getInstance(), BorderLayout.CENTER);
-            System.out.println("✅ SidebarCrudPanel created");
             bottompanel.revalidate();
             bottompanel.repaint();
-            System.out.println("✅ SidebarCrudPanel added to bottompanel");
 
+            // Set background penunjang
             jPanel4.setBackground(new Color(33, 37, 41));
             toppanel.setBackground(new Color(33, 37, 41));
             bottompanel.setBackground(new Color(33, 37, 41));
+
         } catch (Exception e) {
-            System.err.println("❌ Error: " + e.getMessage());
+            System.err.println("❌ Error pada inisialisasi layout: " + e.getMessage());
             e.printStackTrace();
         }
     }
