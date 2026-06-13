@@ -3,6 +3,7 @@
  * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
  */
 package util;
+
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import javax.crypto.Cipher;
@@ -13,9 +14,10 @@ import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.NoSuchPaddingException;
 
 public class EncryptionUtils {
+
     private static final String ALGORITHM = "AES";
-     // Kunci AES harus 16 karakter
-    private static final String KEY = "1234567890123456";
+    // Kunci AES harus 16 karakter
+    private static final String KEY = System.getProperty("KEY");
     private static final byte[] SECRET_KEY = KEY.getBytes();
 
     public static String encrypt(String value) {

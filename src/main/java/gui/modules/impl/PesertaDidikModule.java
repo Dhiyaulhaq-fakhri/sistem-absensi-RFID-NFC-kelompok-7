@@ -10,6 +10,8 @@ import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
+import util.EncryptionUtils;
+import util.SecurityUtils;
 
 /**
  *
@@ -211,7 +213,7 @@ public class PesertaDidikModule implements MasterDataModule {
                 String uid = siswa.getUidRfid();
                 String nama = siswa.getNamaLengkap();
                 String kelas = siswa.getKelas();
-                String idsiswa = siswa.getIdsiswa();
+                String idsiswa = EncryptionUtils.decrypt(siswa.getIdsiswa());
 
                 // Bikin card utama
                 JPanel card = new JPanel();
@@ -225,17 +227,19 @@ public class PesertaDidikModule implements MasterDataModule {
                 // PANEL DATA (Bagian Teks)
                 JPanel dataPanel = new JPanel();
                 dataPanel.setBackground(Color.WHITE);
-                dataPanel.setLayout(new GridLayout(3, 1, 0, 5));
+                dataPanel.setLayout(new GridLayout(4, 1, 0, 5));
                 dataPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
                 JLabel lbNama = new JLabel("Nama : " + (nama != null ? nama : "-"));
                 lbNama.setFont(new java.awt.Font("Segoe UI", java.awt.Font.BOLD, 14));
                 
                 JLabel lbUID = new JLabel("UID : " + (uid != null ? uid : "-"));
+                JLabel lbIdPeserta = new JLabel("ID Peserta : " + (idsiswa != null ? idsiswa : "-"));
                 JLabel lbKelas = new JLabel("Kelas : " + (kelas != null ? kelas : "-"));
 
                 dataPanel.add(lbNama);
                 dataPanel.add(lbUID);
+                dataPanel.add(lbIdPeserta);
                 dataPanel.add(lbKelas);
 
                 // PANEL TOMBOL
@@ -256,16 +260,15 @@ public class PesertaDidikModule implements MasterDataModule {
                     // PENTING: Ganti "txtUid", "txtIdSiswa" dengan nama variabel 
                     // textfield input form yang ada di dalam PesertaDidikModule kamu!
                     
-                    /* CONTOH:
-                    txtUid.setText(uid);
-                    txtIdSiswa.setText(idsiswa);
-                    txtIdSiswa.setEditable(false);
+                    txtUID.setText(uid);
+                    txtIdPeserta.setText(idsiswa);
+                    txtIdPeserta.setEditable(false);
                     txtNama.setText(nama);
                     txtKelas.setText(kelas);
                     
                     btnUpdate.setEnabled(true);
                     btnTambah.setEnabled(false);
-                    */
+                    
                     System.out.println("Tombol Edit ditekan untuk: " + nama);
                 });
 
@@ -303,21 +306,51 @@ public class PesertaDidikModule implements MasterDataModule {
     }
     
     @Override
-    public void save() {
-        String uid = txtUID.getText();
-        String idPeserta = txtIdPeserta.getText();
-        String nama = txtNama.getText();
-        String kelas = txtKelas.getText();
-        
-        if (uid.isEmpty() || idPeserta.isEmpty() || nama.isEmpty() || kelas.isEmpty()) {
-            JOptionPane.showMessageDialog(null, "Semua field harus diisi!", "Warning", JOptionPane.WARNING_MESSAGE);
-            return;
-        }
-        
-        // TODO: Call PesertaDidikService.tambahPeserta(...)
-        JOptionPane.showMessageDialog(null, "Data peserta berhasil ditambahkan!", "Success", JOptionPane.INFORMATION_MESSAGE);
-        refresh();
+public void save() {
+    String uid = txtUID.getText();
+    String idPeserta = txtIdPeserta.getText();
+    String nama = txtNama.getText();
+    String kelas = txtKelas.getText();
+
+    if (uid.isEmpty() || idPeserta.isEmpty()
+            || nama.isEmpty() || kelas.isEmpty()) {
+
+        JOptionPane.showMessageDialog(
+                null,
+                "Semua field harus diisi!",
+                "Warning",
+                JOptionPane.WARNING_MESSAGE
+        );
+        return;
     }
+
+    objects.pesertadidik peserta = new objects.pesertadidik();
+
+    // HASH UID RFID
+    peserta.setUidRfid(
+            SecurityUtils.getHash(uid, SecurityUtils.SHA_256)
+    );
+
+    // ENKRIPSI ID PESERTA
+    peserta.setIdsiswa(
+            EncryptionUtils.encrypt(idPeserta)
+    );
+
+    // DATA BIASA
+    peserta.setNamaLengkap(nama);
+    peserta.setKelas(kelas);
+
+    pesertaService.tambahPesertaDidik(peserta);
+
+    JOptionPane.showMessageDialog(
+            null,
+            "Data peserta berhasil ditambahkan!",
+            "Success",
+            JOptionPane.INFORMATION_MESSAGE
+    );
+
+    refresh();
+}
     
     @Override
     public void update() {

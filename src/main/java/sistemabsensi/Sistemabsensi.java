@@ -4,7 +4,7 @@
 package sistemabsensi;
 
 import com.formdev.flatlaf.FlatLightLaf;
-import gui.Adminpanel;
+import gui.Login;
 
 /**
  *
@@ -38,7 +38,7 @@ public class Sistemabsensi {
         System.out.println("🚀 Membuka aplikasi...\n");
         FlatLightLaf.setup();
         java.awt.EventQueue.invokeLater(() -> {
-            new Adminpanel().setVisible(true);
+            new Login().setVisible(true);
         });
     }
 }
