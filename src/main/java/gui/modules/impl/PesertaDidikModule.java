@@ -335,7 +335,7 @@ public class PesertaDidikModule implements MasterDataModule {
                     );
 
                     if (confirm == JOptionPane.YES_OPTION) {
-                        pesertaService.hapusPesertaDidik(idsiswa);
+                        pesertaService.hapusPesertaDidik(siswa.getIdsiswa());
                         loadTableData(); // Refresh UI Module dengan memanggil dirinya sendiri
                         JOptionPane.showMessageDialog(cardsContainerPanel, "Data berhasil dihapus!");
                     }
@@ -467,7 +467,7 @@ public class PesertaDidikModule implements MasterDataModule {
 
     @Override
     public void delete() {
-        String idPeserta = txtIdPeserta.getText();
+        String idPeserta = txtIdPeserta.getText().trim();
 
         if (idPeserta.isEmpty()) {
             JOptionPane.showMessageDialog(null, "Pilih data peserta terlebih dahulu!", "Warning", JOptionPane.WARNING_MESSAGE);
