@@ -12,6 +12,7 @@ import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import util.EncryptionUtils;
 import util.SecurityUtils;
+import service.pesertadidikservice;
 
 /**
  *
@@ -361,7 +362,7 @@ public void save() {
             return;
         }
         
-        // TODO: Call PesertaDidikService.updatePeserta(...)
+        pesertadidikservice.updatePeserta(peserta);
         JOptionPane.showMessageDialog(null, "Data peserta berhasil diupdate!", "Success", JOptionPane.INFORMATION_MESSAGE);
         refresh();
     }
