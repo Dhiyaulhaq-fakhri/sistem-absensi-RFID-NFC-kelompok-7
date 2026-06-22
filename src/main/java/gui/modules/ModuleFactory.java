@@ -8,6 +8,7 @@ package gui.modules;
 import gui.modules.impl.PesertaDidikModule;
 //import gui.modules.impl.KelasModule;
 //import gui.modules.impl.JamPelajaranModule;
+import gui.modules.impl.AttendanceModule;
 import java.util.HashMap;
 import java.util.Map;
 /**
@@ -23,6 +24,7 @@ public class ModuleFactory {
         modules.put("Peserta Didik", new PesertaDidikModule());
 //        modules.put("Kelas", new KelasModule());
 //        modules.put("Jam Pelajaran", new JamPelajaranModule());
+        modules.put("KiosK", new AttendanceModule());
     }
     
     public static MasterDataModule getModule(String moduleName) {

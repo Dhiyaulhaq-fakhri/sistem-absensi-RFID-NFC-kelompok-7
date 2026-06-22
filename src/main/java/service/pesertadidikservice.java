@@ -9,6 +9,7 @@ import objects.pesertadidik;
 import com.mongodb.client.model.Filters;
 import org.bson.conversions.Bson;
 import java.util.List;
+import util.EncryptionUtils;
 
 /**
  *
@@ -40,26 +41,33 @@ public class pesertadidikservice {
         return dao.findOne(filter);
     }
 
-    // Cari peserta didik berdasarkan nama (regex search - case insensitive)
-    
+    // Cari peserta didik berdasarkan nama, kelas (regex), atau ID siswa (exact match enkripsi)
     public List<pesertadidik> cariByNama(String nama) {
-        Bson filter = Filters.regex("namaLengkap", nama, "i");
+
+        // Enkripsi kata kunci untuk dicocokkan dengan idsiswa di database
+        String encryptedKeyword = EncryptionUtils.encrypt(nama);
+
+        Bson filter = Filters.or(
+                Filters.regex("namaLengkap", nama, "i"), // Pencarian nama (bisa potongan kata)
+                Filters.regex("kelas", nama, "i"), // Pencarian kelas (bisa potongan kata)
+                Filters.eq("idsiswa", encryptedKeyword) // WAJIB pakai .eq untuk data terenkripsi
+        );
+
+        // Langsung return tanpa konversiKeList
         return dao.findMany(filter);
     }
-    
+
     // Cari peserta didik berdasarkan kelas
-    
     public List<pesertadidik> cariByKelas(String kelas) {
         Bson filter = Filters.eq("kelas", kelas);
         return dao.findMany(filter);
     }
-    
+
     // Update data peserta didik
-            
     public void updatePesertaDidik(pesertadidik peserta) {
         Bson filter = Filters.eq("idsiswa", peserta.getIdsiswa());
         pesertadidik existing = dao.findOne(filter);
-        
+
         if (existing != null) {
             dao.update(filter, peserta);
             System.out.println("✓ Data peserta didik '" + peserta.getNamaLengkap() + "' berhasil diupdate");
@@ -67,9 +75,8 @@ public class pesertadidikservice {
             System.out.println("✗ Peserta didik dengan ID " + peserta.getIdsiswa() + " tidak ditemukan");
         }
     }
-    
+
     // hapus peserta didik
-    
     public void hapusPesertaDidik(String idsiswa) {
         Bson filter = Filters.eq("idsiswa", idsiswa);
         dao.delete(filter);
@@ -84,8 +91,8 @@ public class pesertadidikservice {
         } else {
             for (int i = 0; i < daftar.size(); i++) {
                 pesertadidik p = daftar.get(i);
-                System.out.printf("%d. %s (ID: %s) - Kelas %s\n", 
-                    i+1, p.getNamaLengkap(), p.getIdsiswa(), p.getKelas());
+                System.out.printf("%d. %s (ID: %s) - Kelas %s\n",
+                        i + 1, p.getNamaLengkap(), p.getIdsiswa(), p.getKelas());
             }
         }
         System.out.println("==========================================\n");
