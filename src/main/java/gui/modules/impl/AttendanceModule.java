@@ -10,16 +10,21 @@ import java.awt.*;
 import util.EncryptionUtils;
 import util.SecurityUtils;
 import service.DigitalClockService;
+import service.pesertadidikservice;
+import service.LogAbsensiService;
+import service.SerialService;
+import objects.pesertadidik;
+import java.util.prefs.Preferences;
 
 /**
  *
  * @author Lenovo
  */
-
 public class AttendanceModule implements MasterDataModule {
+
     // Service yang dibutuhkan (Silakan sesuaikan dengan package kamu)
     private final service.pesertadidikservice pesertaService = new service.pesertadidikservice();
-    // private final service.LogAbsensiService logService = new service.LogAbsensiService(); 
+    private final service.LogAbsensiService logService = new service.LogAbsensiService();
 
     // UI Components untuk Layar Absensi (Ditaruh di getTablePanel)
     private JLabel lblJam;
@@ -28,7 +33,7 @@ public class AttendanceModule implements MasterDataModule {
     private JLabel lblIdSiswa;
     private JLabel lblKelasSiswa;
     private JLabel lblAvatar;
-    
+
     private Thread clockThread;
     private Thread delayThread;
 
@@ -36,16 +41,16 @@ public class AttendanceModule implements MasterDataModule {
     public String getModuleName() {
         return "Absensi Peserta Didik";
     }
-    
+
     /**
-     * Sesuai permintaan: Kolom Form CRUD ini dibuat kosong total.
-     * Hanya diberikan warna background yang konsisten dengan sistem.
+     * Sesuai permintaan: Kolom Form CRUD ini dibuat kosong total. Hanya
+     * diberikan warna background yang konsisten dengan sistem.
      */
     @Override
     public JPanel getCrudFormPanel() {
         JPanel panel = new JPanel();
         panel.setBackground(new Color(33, 37, 41)); // Warna gelap mengikuti tema CRUD kamu
-        
+
         // Opsional: Jika ingin benar-benar kosong, biarkan tanpa komponen.
         // Di bawah ini ditambahkan label samar hanya agar tidak terlalu hampa.
         panel.setLayout(new BorderLayout());
@@ -53,12 +58,13 @@ public class AttendanceModule implements MasterDataModule {
         lblInfo.setFont(new Font("Segoe UI", Font.BOLD, 12));
         lblInfo.setForeground(new Color(100, 110, 120));
         panel.add(lblInfo, BorderLayout.NORTH);
-        
+
         return panel;
     }
-    
+
     /**
-     * Berfungsi sebagai main container layar absensi utama (menggantikan tabel/kartu).
+     * Berfungsi sebagai main container layar absensi utama (menggantikan
+     * tabel/kartu).
      */
     @Override
     public JPanel getTablePanel() {
@@ -79,7 +85,7 @@ public class AttendanceModule implements MasterDataModule {
         lblJam = new JLabel("Memuat waktu...");
         lblJam.setFont(new Font("Segoe UI", Font.BOLD, 22));
         lblJam.setForeground(new Color(104, 23, 39));
-        
+
         headerPanel.add(lblTitle, BorderLayout.WEST);
         headerPanel.add(lblJam, BorderLayout.EAST);
         mainPanel.add(headerPanel, BorderLayout.PAGE_START);
@@ -89,7 +95,7 @@ public class AttendanceModule implements MasterDataModule {
         // ==========================================
         JPanel centerWrapper = new JPanel(new GridBagLayout());
         centerWrapper.setBackground(new Color(240, 240, 240));
-        
+
         // Kotak Kios Utama di Tengah Layar
         JPanel kioskCard = new JPanel();
         kioskCard.setLayout(new BoxLayout(kioskCard, BoxLayout.Y_AXIS));
@@ -135,7 +141,7 @@ public class AttendanceModule implements MasterDataModule {
 
         lblIdSiswa = new JLabel("ID Peserta: -");
         lblIdSiswa.setForeground(Color.WHITE);
-        
+
         lblKelasSiswa = new JLabel("Kelas: -");
         lblKelasSiswa.setForeground(Color.WHITE);
 
@@ -143,7 +149,7 @@ public class AttendanceModule implements MasterDataModule {
         infoSiswaTextPanel.add(lblIdSiswa);
         infoSiswaTextPanel.add(lblKelasSiswa);
         dataSiswaPanel.add(infoSiswaTextPanel);
-        
+
         kioskCard.add(dataSiswaPanel);
         kioskCard.add(Box.createVerticalStrut(20));
 
@@ -169,71 +175,69 @@ public class AttendanceModule implements MasterDataModule {
 
         return mainPanel;
     }
-    
+
     /**
      * Simulasi atau jembatan penerimaan data dari handler SerialService.
      * Tempelkan pembbacaan RFID hardware kamu ke sini.
      */
     private void setupAttendanceWorkflow() {
-        /* // Contoh implementasi jika SerialService dipanggil:
-        util.SerialService.getInstance().addHandler(dataRfid -> {
+        // Mendaftarkan handler asinkron ke SerialService [11]
+        SerialService.getInstance().addHandler(dataRfid -> {
+            // 1. Ambil status absensi saat ini dari Preferences modul Settings
+            java.util.prefs.Preferences settingsPrefs = java.util.prefs.Preferences.userNodeForPackage(gui.modules.impl.SettingsModule.class);
+            String statusMode = settingsPrefs.get("LAST_STATUS", "Masuk");
+            // 2. HASH: Mengamankan UID menggunakan SHA-256 [12, 13]
             String hashedUid = SecurityUtils.getHash(dataRfid, SecurityUtils.SHA_256);
-            objects.pesertadidik siswa = pesertaService.findByUid(hashedUid); // sesuaikan method service Anda
-            
+
+            // 3. MATCH: Mencari data peserta didik (Menggunakan instance variabel 'pesertaService')
+            pesertadidik p = pesertaService.cariByUidRfid(hashedUid);
+            boolean isSuccess = (p != null);
+
+            // 4. SAVE: Mencatat log absensi [6]
+            logService.simpanLog(hashedUid, statusMode);
+
+            // 4. NOTIFY: Update GUI secara aman (mencegah UI Freezing) [10]
             SwingUtilities.invokeLater(() -> {
-                if (siswa != null) {
-                    lblNamaSiswa.setText("Nama Lengkap: " + siswa.getNamaLengkap());
-                    lblIdSiswa.setText("ID Peserta: " + EncryptionUtils.decrypt(siswa.getIdsiswa()));
-                    lblKelasSiswa.setText("Kelas: " + siswa.getKelas());
-                    lblAvatar.setBackground(new Color(40, 167, 69)); // Hijau sukses
+                if (isSuccess) {
+                    // Masukkan data dari objek 'pesertadidik' ke Label masing-masing
+                    lblNamaSiswa.setText("Nama Lengkap: " + p.getNamaLengkap());
+                    lblIdSiswa.setText("ID Peserta: " + EncryptionUtils.decrypt(p.getIdsiswa()));
+                    lblKelasSiswa.setText("Kelas: " + p.getKelas());
+
+                    // Ganti warna avatar jadi hijau tanda sukses
+                    lblAvatar.setBackground(new Color(25, 135, 84));
                     lblAvatar.setText("OK");
-                    
-                    updateLabelWithDelay(lblStatusTap, "Absensi Berhasil Terdaftar!");
+
+                    // Update label status paling bawah dengan pesan sukses & warna hijau
+                    lblStatusTap.setBackground(new Color(25, 135, 84));
+                    updateLabelWithDelay(lblStatusTap, "ABSENSI (" + statusMode.toUpperCase() + ") DITERIMA");
                 } else {
-                    updateLabelWithDelay(lblStatusTap, "Kartu Tidak Terdaftar!");
+                    // Kasus jika kartu tidak ditemukan di database
+                    lblAvatar.setBackground(new Color(220, 53, 69)); // Merah
+                    lblAvatar.setText("ERR");
+                    lblStatusTap.setBackground(new Color(220, 53, 69));
+                    updateLabelWithDelay(lblStatusTap, "KARTU TIDAK TERDAFTAR!");
                 }
             });
         });
-        */
     }
 
-    /**
-     * Jam digital lokal sederhana menggunakan Background Thread standard Java.
-     */
-    private void initClockEngine() {
-         DigitalClockService service = new DigitalClockService(lblJam, "EEEE, d MMMM yyyy, HH:mm:ss");
-        
-        // 1. Ambil objek thread dari service
-        clockThread = service.getThread();
-        
-        // 2. Beri nama secara mandiri untuk debugging/tracking
-        clockThread.setName("Thread-Jam-Kiosk");
-        
-        // 3. Atur daemon secara mandiri sebelum start [Conversation History]
-        clockThread.setDaemon(true);
-        
-        // 4. Jalankan thread (Fase New -> Runnable) [3]
-        clockThread.start();
-        
-        System.out.println("Memulai: " + clockThread.getName() + " (Daemon: " + clockThread.isDaemon() + ")");
-    }
-
-    /**
-     * Memperbarui status teks di layar bawah dan otomatis meresetnya kembali ke status default.
-     */
     private void updateLabelWithDelay(JLabel comp, String info) {
-        // Gunakan SwingUtilities agar perubahan teks awal aman (Thread-Safe)
-        SwingUtilities.invokeLater(() -> comp.setText(info));
+        comp.setText(info);
 
         if (delayThread != null && delayThread.isAlive()) {
             delayThread.interrupt();
         }
 
         delayThread = new Thread(() -> {
+            comp.setText(info);
             try {
-                Thread.sleep(3000); // Tampilkan pesan selama 3 detik
+                Thread.sleep(3000); // Tampilkan pesan sukses/gagal selama 3 detik
+
                 SwingUtilities.invokeLater(() -> {
-                    comp.setText("STANDBY");
+                    // Kembalikan ke kondisi Standby awal
+                    lblStatusTap.setText("STANDBY");
+                    lblStatusTap.setBackground(new Color(104, 23, 39)); // Warna merah marun awal
                     lblNamaSiswa.setText("Nama Lengkap: -");
                     lblIdSiswa.setText("ID Peserta: -");
                     lblKelasSiswa.setText("Kelas: -");
@@ -241,20 +245,62 @@ public class AttendanceModule implements MasterDataModule {
                     lblAvatar.setText("No Card");
                 });
             } catch (InterruptedException e) {
-                // Thread di-interrupt oleh tap baru sebelum 3 detik habis
+                // Penanganan jika thread dihentikan paksa (Interrupted)
             }
         });
-        delayThread.setName("Thread-Delay-Reset");
+
+        delayThread.setName("delayThread");
         delayThread.setDaemon(true);
         delayThread.start();
+
     }
+
+    /**
+     * Jam digital lokal sederhana menggunakan Background Thread standard Java.
+     */
+    private void initClockEngine() {
+        DigitalClockService service = new DigitalClockService(lblJam, "EEEE, d MMMM yyyy, HH:mm:ss");
+
+        // 1. Ambil objek thread dari service
+        clockThread = service.getThread();
+
+        // 2. Beri nama secara mandiri untuk debugging/tracking
+        clockThread.setName("Thread-Jam-Kiosk");
+
+        // 3. Atur daemon secara mandiri sebelum start [Conversation History]
+        clockThread.setDaemon(true);
+
+        // 4. Jalankan thread (Fase New -> Runnable) [3]
+        clockThread.start();
+
+        System.out.println("Memulai: " + clockThread.getName() + " (Daemon: " + clockThread.isDaemon() + ")");
+    }
+
+    /**
+     * Memperbarui status teks di layar bawah dan otomatis meresetnya kembali ke
+     * status default.
+     */
 
     // =========================================================================
     // SISA METHOD INTERFACE (Dikosongkan / Diabaikan karena ini modul Kiosk)
     // =========================================================================
-    @Override public void loadTableData() {}
-    @Override public void save() {}
-    @Override public void update() {}
-    @Override public void delete() {}
-    @Override public void refresh() {}
+    @Override
+    public void loadTableData() {
+    }
+
+    @Override
+    public void save() {
+    }
+
+    @Override
+    public void update() {
+    }
+
+    @Override
+    public void delete() {
+    }
+
+    @Override
+    public void refresh() {
+    }
 }
