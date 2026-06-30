@@ -5,6 +5,7 @@
 package gui.modules.impl;
 
 import gui.modules.MasterDataModule;
+import javax.swing.JOptionPane;
 import javax.swing.*;
 import java.awt.*;
 import util.EncryptionUtils;
@@ -33,6 +34,9 @@ public class AttendanceModule implements MasterDataModule {
     private JLabel lblIdSiswa;
     private JLabel lblKelasSiswa;
     private JLabel lblAvatar;
+
+    private JTextField txtUidTesting;
+    private JButton btnTapSimulation;
 
     private Thread clockThread;
     private Thread delayThread;
@@ -93,10 +97,40 @@ public class AttendanceModule implements MasterDataModule {
         // ==========================================
         // 2. CENTER PANEL (Konten Pembaca RFID & Data Card)
         // ==========================================
-        JPanel centerWrapper = new JPanel(new GridBagLayout());
+        // fix 1
+        JPanel centerWrapper = new JPanel(new BorderLayout());
         centerWrapper.setBackground(new Color(240, 240, 240));
 
+        // === TAMBAHAN: Testing Panel (TextInput untuk UID manual) ===
+        JPanel testingPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 10));
+        testingPanel.setBackground(new Color(240, 240, 240));
+
+        JLabel lblTestingLabel = new JLabel("Test Manual UID:");
+        lblTestingLabel.setFont(new Font("Segoe UI", Font.BOLD, 11));
+
+        txtUidTesting = new JTextField(20);
+        txtUidTesting.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+        txtUidTesting.setToolTipText("Masukkan UID atau hashed UID untuk testing");
+
+        btnTapSimulation = new JButton("Simulasi Tap");
+        btnTapSimulation.setFont(new Font("Segoe UI", Font.BOLD, 11));
+        btnTapSimulation.setBackground(new Color(104, 23, 39));
+        btnTapSimulation.setForeground(Color.WHITE);
+        btnTapSimulation.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        btnTapSimulation.addActionListener(e -> simulateRfidTap());
+
+        testingPanel.add(lblTestingLabel);
+        testingPanel.add(txtUidTesting);
+        testingPanel.add(btnTapSimulation);
+
+        // fix 2
+        centerWrapper.add(testingPanel, BorderLayout.PAGE_START);
+
         // Kotak Kios Utama di Tengah Layar
+        //fix 3
+        JPanel kioskCenterPanel = new JPanel(new GridBagLayout());
+        kioskCenterPanel.setBackground(new Color(240, 240, 240));
+
         JPanel kioskCard = new JPanel();
         kioskCard.setLayout(new BoxLayout(kioskCard, BoxLayout.Y_AXIS));
         kioskCard.setBackground(Color.WHITE);
@@ -164,41 +198,70 @@ public class AttendanceModule implements MasterDataModule {
         lblStatusTap.setAlignmentX(Component.CENTER_ALIGNMENT);
         kioskCard.add(lblStatusTap);
 
-        centerWrapper.add(kioskCard);
+        // PERBAIKAN: Add kioskCard ke GridBagLayout dengan benar
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        gbc.anchor = GridBagConstraints.CENTER;
+        kioskCenterPanel.add(kioskCard, gbc);
+
+        centerWrapper.add(kioskCenterPanel, BorderLayout.CENTER);
         mainPanel.add(centerWrapper, BorderLayout.CENTER);
 
         // ==========================================
         // 3. RUN SERVICES (Clock & RFID)
         // ==========================================
         initClockEngine();
-        setupAttendanceWorkflow();
+        registerAttendanceHandler();
 
         return mainPanel;
     }
 
     /**
-     * Simulasi atau jembatan penerimaan data dari handler SerialService.
-     * Tempelkan pembbacaan RFID hardware kamu ke sini.
+     * Daftarkan handler khusus untuk modul Attendance Handler ini akan otomatis
+     * dijalankan saat data RFID diterima dari SerialService
      */
-    private void setupAttendanceWorkflow() {
-        // Mendaftarkan handler asinkron ke SerialService [11]
+    private void registerAttendanceHandler() {
         SerialService.getInstance().addHandler(dataRfid -> {
-            // 1. Ambil status absensi saat ini dari Preferences modul Settings
-            java.util.prefs.Preferences settingsPrefs = java.util.prefs.Preferences.userNodeForPackage(gui.modules.impl.SettingsModule.class);
-            String statusMode = settingsPrefs.get("LAST_STATUS", "Masuk");
-            // 2. HASH: Mengamankan UID menggunakan SHA-256 [12, 13]
-            String hashedUid = SecurityUtils.getHash(dataRfid, SecurityUtils.SHA_256);
+            System.out.println("\n=== AttendanceModule: RFID Tag Diterima ===");
+            System.out.println("Raw UID: " + dataRfid);
 
-            // 3. MATCH: Mencari data peserta didik (Menggunakan instance variabel 'pesertaService')
+            // Proses absensi dengan data RFID
+            processAttendance(dataRfid);
+        });
+    }
+
+    /**
+     * Process attendance dengan UID dari hardware RFID atau manual testing
+     */
+    private void processAttendance(String dataRfid) {
+        try {
+            // 1. Ambil status absensi saat ini dari Preferences modul Settings
+            java.util.prefs.Preferences settingsPrefs
+                    = java.util.prefs.Preferences.userNodeForPackage(gui.modules.impl.SettingsModule.class);
+            String statusMode = settingsPrefs.get("LAST_STATUS", "Masuk");
+
+            // 2. HASH: Mengamankan UID menggunakan SHA-256
+            String hashedUid = SecurityUtils.getHash(dataRfid, SecurityUtils.SHA_256);
+            System.out.println("Hashed UID: " + hashedUid);
+
+            // 3. MATCH: Mencari data peserta didik di database
             pesertadidik p = pesertaService.cariByUidRfid(hashedUid);
             boolean isSuccess = (p != null);
 
-            // 4. SAVE: Mencatat log absensi [6]
-            logService.simpanLog(hashedUid, statusMode);
+            // 4. SAVE: Mencatat log absensi ke MongoDB
+            try {
+                logService.simpanLog(hashedUid, statusMode);
+                System.out.println("✓ Log berhasil disimpan ke MongoDB");
+            } catch (Exception e) {
+                System.err.println("✗ Error saat simpan log: " + e.getMessage());
+            }
 
-            // 4. NOTIFY: Update GUI secara aman (mencegah UI Freezing) [10]
+            // 5. NOTIFY: Update GUI secara aman (mencegah UI Freezing)
             SwingUtilities.invokeLater(() -> {
                 if (isSuccess) {
+                    System.out.println("✓ Peserta ditemukan: " + p.getNamaLengkap());
+
                     // Masukkan data dari objek 'pesertadidik' ke Label masing-masing
                     lblNamaSiswa.setText("Nama Lengkap: " + p.getNamaLengkap());
                     lblIdSiswa.setText("ID Peserta: " + EncryptionUtils.decrypt(p.getIdsiswa()));
@@ -212,6 +275,8 @@ public class AttendanceModule implements MasterDataModule {
                     lblStatusTap.setBackground(new Color(25, 135, 84));
                     updateLabelWithDelay(lblStatusTap, "ABSENSI (" + statusMode.toUpperCase() + ") DITERIMA");
                 } else {
+                    System.out.println("✗ Peserta TIDAK ditemukan di database");
+
                     // Kasus jika kartu tidak ditemukan di database
                     lblAvatar.setBackground(new Color(220, 53, 69)); // Merah
                     lblAvatar.setText("ERR");
@@ -219,6 +284,22 @@ public class AttendanceModule implements MasterDataModule {
                     updateLabelWithDelay(lblStatusTap, "KARTU TIDAK TERDAFTAR!");
                 }
             });
+
+        } catch (Exception e) {
+            System.err.println("✗ Error dalam processAttendance: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * Simulasi atau jembatan penerimaan data dari handler SerialService.
+     * Tempelkan pembacaan RFID hardware kamu ke sini.
+     */
+    private void setupAttendanceWorkflow() {
+        // Mendaftarkan handler asinkron ke SerialService
+        SerialService.getInstance().addHandler(dataRfid -> {
+            System.out.println("SerialService: Data RFID diterima = " + dataRfid);
+            processAttendance(dataRfid);
         });
     }
 
@@ -277,10 +358,77 @@ public class AttendanceModule implements MasterDataModule {
     }
 
     /**
+     * Method untuk simulasi tap kartu dari manual UID input (untuk testing)
+     */
+    private void simulateRfidTap() {
+        String uid = txtUidTesting.getText().trim();
+
+        if (uid.isEmpty()) {
+            lblStatusTap.setBackground(new Color(220, 53, 69));
+            updateLabelWithDelay(lblStatusTap, "MASUKKAN UID TERLEBIH DAHULU!");
+            return;
+        }
+
+        System.out.println("\n=== MANUAL TESTING: Simulasi Tap ===");
+        System.out.println("UID Input: " + uid);
+
+        // Panggil logic yang sama seperti hardware RFID
+        processAttendance(uid);
+    }
+
+    /**
+     * Extract logic attendance yang sebelumnya di setupAttendanceWorkflow()
+     * Agar bisa dipanggil dari SerialService maupun dari Manual Testing
+     */
+//    private void processAttendance(String dataRfid) {
+//        // 1. Ambil status absensi saat ini dari Preferences modul Settings
+//        java.util.prefs.Preferences settingsPrefs = java.util.prefs.Preferences.userNodeForPackage(gui.modules.impl.SettingsModule.class);
+//        String statusMode = settingsPrefs.get("LAST_STATUS", "Masuk");
+//
+//        // 2. HASH: Mengamankan UID menggunakan SHA-256
+//        String hashedUid = SecurityUtils.getHash(dataRfid, SecurityUtils.SHA_256);
+//        System.out.println("Hashed UID: " + hashedUid);
+//
+//        // 3. MATCH: Mencari data peserta didik
+//        pesertadidik p = pesertaService.cariByUidRfid(hashedUid);
+//        boolean isSuccess = (p != null);
+//
+//        // 4. SAVE: Mencatat log absensi
+//        logService.simpanLog(hashedUid, statusMode);
+//
+//        // 5. NOTIFY: Update GUI secara aman
+//        SwingUtilities.invokeLater(() -> {
+//            if (isSuccess) {
+//                // Masukkan data dari objek 'pesertadidik' ke Label masing-masing
+//                lblNamaSiswa.setText("Nama Lengkap: " + p.getNamaLengkap());
+//                lblIdSiswa.setText("ID Peserta: " + EncryptionUtils.decrypt(p.getIdsiswa()));
+//                lblKelasSiswa.setText("Kelas: " + p.getKelas());
+//
+//                // Ganti warna avatar jadi hijau tanda sukses
+//                lblAvatar.setBackground(new Color(25, 135, 84));
+//                lblAvatar.setText("OK");
+//
+//                // Update label status paling bawah dengan pesan sukses & warna hijau
+//                lblStatusTap.setBackground(new Color(25, 135, 84));
+//                updateLabelWithDelay(lblStatusTap, "ABSENSI (" + statusMode.toUpperCase() + ") DITERIMA");
+//
+//                System.out.println("✓ Absensi berhasil: " + p.getNamaLengkap());
+//            } else {
+//                // Kasus jika kartu tidak ditemukan di database
+//                lblAvatar.setBackground(new Color(220, 53, 69)); // Merah
+//                lblAvatar.setText("ERR");
+//                lblStatusTap.setBackground(new Color(220, 53, 69));
+//                updateLabelWithDelay(lblStatusTap, "KARTU TIDAK TERDAFTAR!");
+//
+//                System.out.println("✗ Kartu tidak ditemukan!");
+//            }
+//        });
+//    }
+
+    /**
      * Memperbarui status teks di layar bawah dan otomatis meresetnya kembali ke
      * status default.
      */
-
     // =========================================================================
     // SISA METHOD INTERFACE (Dikosongkan / Diabaikan karena ini modul Kiosk)
     // =========================================================================

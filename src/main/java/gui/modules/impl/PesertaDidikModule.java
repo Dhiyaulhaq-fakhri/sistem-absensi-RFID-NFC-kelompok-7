@@ -78,7 +78,7 @@ public class PesertaDidikModule implements MasterDataModule {
         txtUID.setPreferredSize(lockedFieldSize); // Kunci ukuran ideal
         txtUID.setMinimumSize(lockedFieldSize);   // Cegah menciut jadi 0px
         txtUID.setAlignmentX(Component.LEFT_ALIGNMENT);
-        
+
         formPanel.add(lblUID);
         formPanel.add(Box.createVerticalStrut(4)); // Jarak label ke textfield
         formPanel.add(txtUID);
@@ -95,7 +95,7 @@ public class PesertaDidikModule implements MasterDataModule {
         txtIdPeserta.setPreferredSize(lockedFieldSize); // Tambahkan ini
         txtIdPeserta.setMinimumSize(lockedFieldSize);   // Tambahkan ini
         txtIdPeserta.setAlignmentX(Component.LEFT_ALIGNMENT);
-        
+
         formPanel.add(lblIdPeserta);
         formPanel.add(Box.createVerticalStrut(4));
         formPanel.add(txtIdPeserta);
@@ -112,7 +112,7 @@ public class PesertaDidikModule implements MasterDataModule {
         txtNama.setPreferredSize(lockedFieldSize); // Tambahkan ini
         txtNama.setMinimumSize(lockedFieldSize);   // Tambahkan ini
         txtNama.setAlignmentX(Component.LEFT_ALIGNMENT);
-        
+
         formPanel.add(lblNama);
         formPanel.add(Box.createVerticalStrut(4));
         formPanel.add(txtNama);
@@ -123,7 +123,7 @@ public class PesertaDidikModule implements MasterDataModule {
         lblKelas.setForeground(Color.WHITE);
         lblKelas.setFont(new Font("Segoe UI", Font.PLAIN, 12));
         lblKelas.setAlignmentX(Component.LEFT_ALIGNMENT);
-        
+
         // Buat daftar pilihan kelas yang tersedia
         String[] daftarKelas = {"", "X-I", "X-II", "XI-I", "XI-II", "XII-I", "XII-II"};
         cboKelas = new JComboBox<>(daftarKelas);
@@ -132,7 +132,7 @@ public class PesertaDidikModule implements MasterDataModule {
         cboKelas.setPreferredSize(lockedFieldSize); // Tambahkan ini
         cboKelas.setMinimumSize(lockedFieldSize);   // Tambahkan ini
         cboKelas.setAlignmentX(Component.LEFT_ALIGNMENT);
-        
+
         formPanel.add(lblKelas);
         formPanel.add(Box.createVerticalStrut(4));
         formPanel.add(cboKelas); // Masukkan combo box ke panel
@@ -240,8 +240,14 @@ public class PesertaDidikModule implements MasterDataModule {
 
         // 1. Bersihkan kontainer dan atur layout Grid (2 Kolom)
         cardsContainerPanel.removeAll();
-        cardsContainerPanel.setLayout(new GridLayout(0, 2, 15, 15));
-        cardsContainerPanel.setBackground(Color.WHITE);
+        cardsContainerPanel.setLayout(new GridBagLayout());
+
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.insets = new Insets(10, 10, 10, 10);
+        gbc.anchor = GridBagConstraints.NORTHWEST;
+        gbc.fill = GridBagConstraints.NONE;
+
+        cardsContainerPanel.setBackground(new Color(245, 245, 245));
 
         // 2. Ambil kata kunci dari kolom pencarian (jika ada)
         String keyword = txtSearch.getText().trim();
@@ -262,6 +268,9 @@ public class PesertaDidikModule implements MasterDataModule {
             lblKosong.setForeground(Color.GRAY);
             cardsContainerPanel.add(lblKosong, BorderLayout.CENTER);
         } else {
+            int col = 0;
+            int row = 0;
+
             // LOOP DARI DATABASE
             for (objects.pesertadidik siswa : daftarSiswa) {
                 String uid = siswa.getUidRfid();
@@ -271,6 +280,9 @@ public class PesertaDidikModule implements MasterDataModule {
 
                 // Bikin card utama
                 JPanel card = new JPanel();
+
+                card.setPreferredSize(new Dimension(300, 160));
+                card.setMinimumSize(new Dimension(300, 160));
                 card.setBackground(Color.WHITE);
                 card.setBorder(BorderFactory.createCompoundBorder(
                         BorderFactory.createLineBorder(new Color(200, 200, 200), 1, true),
@@ -350,7 +362,17 @@ public class PesertaDidikModule implements MasterDataModule {
                 card.add(actionPanel, BorderLayout.SOUTH);
 
                 // Masukkan card ke penampung utama (cardsContainerPanel)
-                cardsContainerPanel.add(card);
+                gbc.gridx = col;
+                gbc.gridy = row;
+
+                cardsContainerPanel.add(card, gbc);
+
+                col++;
+
+                if (col == 3) {
+                    col = 0;
+                    row++;
+                }
             }
         }
 
@@ -480,10 +502,10 @@ public class PesertaDidikModule implements MasterDataModule {
             try {
                 // Enkripsi dulu idPeserta dari textfield sebelum dikirim ke service (karena database pakai ID terenkripsi)
                 String encryptedId = EncryptionUtils.encrypt(idPeserta);
-                
+
                 // Eksekusi hapus ke database
                 pesertaService.hapusPesertaDidik(encryptedId);
-                
+
                 JOptionPane.showMessageDialog(null, "Data peserta berhasil dihapus!", "Success", JOptionPane.INFORMATION_MESSAGE);
                 refresh(); // Bersihkan form dan load ulang tabel
             } catch (Exception e) {
