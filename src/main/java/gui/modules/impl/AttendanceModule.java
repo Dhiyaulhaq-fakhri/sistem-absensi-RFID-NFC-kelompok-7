@@ -242,7 +242,7 @@ public class AttendanceModule implements MasterDataModule {
             String statusMode = settingsPrefs.get("LAST_STATUS", "Masuk");
 
             // 2. HASH: Mengamankan UID menggunakan SHA-256
-            String hashedUid = SecurityUtils.getHash(dataRfid, SecurityUtils.SHA_256);
+            String hashedUid = SecurityUtils.getHash(dataRfid.trim(), SecurityUtils.SHA_256);
             System.out.println("Hashed UID: " + hashedUid);
 
             // 3. MATCH: Mencari data peserta didik di database
@@ -295,13 +295,13 @@ public class AttendanceModule implements MasterDataModule {
      * Simulasi atau jembatan penerimaan data dari handler SerialService.
      * Tempelkan pembacaan RFID hardware kamu ke sini.
      */
-    private void setupAttendanceWorkflow() {
-        // Mendaftarkan handler asinkron ke SerialService
-        SerialService.getInstance().addHandler(dataRfid -> {
-            System.out.println("SerialService: Data RFID diterima = " + dataRfid);
-            processAttendance(dataRfid);
-        });
-    }
+    //    private void setupAttendanceWorkflow() {
+    //        // Mendaftarkan handler asinkron ke SerialService
+    //        SerialService.getInstance().addHandler(dataRfid -> {
+    //            System.out.println("SerialService: Data RFID diterima = " + dataRfid);
+    //            processAttendance(dataRfid);
+    //        });
+    //    }
 
     private void updateLabelWithDelay(JLabel comp, String info) {
         comp.setText(info);

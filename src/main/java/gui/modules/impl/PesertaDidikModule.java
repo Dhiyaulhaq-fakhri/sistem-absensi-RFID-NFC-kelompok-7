@@ -10,6 +10,8 @@ import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
+import java.util.ArrayList;
+import service.I18nServices;
 import util.EncryptionUtils;
 import util.SecurityUtils;
 import service.pesertadidikservice;
@@ -18,9 +20,35 @@ import service.pesertadidikservice;
  *
  * @author Lenovo
  */
-public class PesertaDidikModule implements MasterDataModule {
+public class PesertaDidikModule implements MasterDataModule, I18nServices.I18nChangeListener {
 
     private final service.pesertadidikservice pesertaService = new service.pesertadidikservice();
+
+    // List pembantu untuk melacak semua komponen (Label & Button) beserta Key I18n-nya
+    private final java.util.List<I18nCompRef> localizedComponents = new ArrayList<>();
+
+    private static class I18nCompRef {
+
+        JComponent component;
+        String i18nKey;
+
+        I18nCompRef(JComponent component, String i18nKey) {
+            this.component = component;
+            this.i18nKey = i18nKey;
+        }
+    }
+
+    private void registerAndSetText(JComponent comp, String key) {
+        // Daftarkan ke list biar dilacak
+        localizedComponents.add(new I18nCompRef(comp, key));
+
+        // Set teksnya langsung saat pertama kali dibuat
+        if (comp instanceof JLabel) {
+            ((JLabel) comp).setText(I18nServices.get(key));
+        } else if (comp instanceof JButton) {
+            ((JButton) comp).setText(I18nServices.get(key));
+        }
+    }
 
     // CRUD Components
     private JTextField txtUID;
@@ -32,6 +60,15 @@ public class PesertaDidikModule implements MasterDataModule {
     private JButton btnDelete;
     private JButton btnRefresh;
     private JTextField txtSearch;
+
+    // 2. NAIKKAN LABEL KE SINI AGAR BISA DI-UPDATE OLEH METHOD onLanguageChanged()
+    private JLabel titleLabel;
+    private JLabel lblUID;
+    private JLabel lblIdPeserta;
+    private JLabel lblNama;
+    private JLabel lblKelas;
+    private JLabel lblCari;
+    private JLabel headerLabel;
 
     // Table
     private JPanel tablePanel;
@@ -50,7 +87,8 @@ public class PesertaDidikModule implements MasterDataModule {
         panel.setBorder(new javax.swing.border.EmptyBorder(10, 10, 10, 10));
 
         // Title
-        JLabel titleLabel = new JLabel("Form Input Peserta Didik Baru");
+        JLabel titleLabel = new JLabel();
+        registerAndSetText(titleLabel, "ui.pesertadidik.title");
         titleLabel.setFont(new Font("Segoe UI", Font.BOLD, 14));
         titleLabel.setForeground(Color.WHITE);
         titleLabel.setAlignmentX(Component.LEFT_ALIGNMENT); // Pastikan rata kiri
@@ -68,7 +106,8 @@ public class PesertaDidikModule implements MasterDataModule {
         Dimension lockedFieldSize = new Dimension(220, 30); // Kunci tinggi absolut di 30px
 
         // UID
-        JLabel lblUID = new JLabel("UID :");
+        JLabel lblUID = new JLabel();
+        registerAndSetText(lblUID, "ui.pesertadidik.uid");
         lblUID.setForeground(Color.WHITE);
         lblUID.setFont(new Font("Segoe UI", Font.PLAIN, 12));
         lblUID.setAlignmentX(Component.LEFT_ALIGNMENT);
@@ -85,7 +124,8 @@ public class PesertaDidikModule implements MasterDataModule {
         formPanel.add(Box.createVerticalStrut(10)); // Jarak antar grup input
 
         // ID Peserta
-        JLabel lblIdPeserta = new JLabel("ID Peserta :");
+        JLabel lblIdPeserta = new JLabel();
+        registerAndSetText(lblIdPeserta, "ui.pesertadidik.id");
         lblIdPeserta.setForeground(Color.WHITE);
         lblIdPeserta.setFont(new Font("Segoe UI", Font.PLAIN, 12));
         lblIdPeserta.setAlignmentX(Component.LEFT_ALIGNMENT);
@@ -102,7 +142,8 @@ public class PesertaDidikModule implements MasterDataModule {
         formPanel.add(Box.createVerticalStrut(10));
 
         // Nama
-        JLabel lblNama = new JLabel("Nama :");
+        JLabel lblNama = new JLabel();
+        registerAndSetText(lblNama, "ui.pesertadidik.name");
         lblNama.setForeground(Color.WHITE);
         lblNama.setFont(new Font("Segoe UI", Font.PLAIN, 12));
         lblNama.setAlignmentX(Component.LEFT_ALIGNMENT);
@@ -119,7 +160,8 @@ public class PesertaDidikModule implements MasterDataModule {
         formPanel.add(Box.createVerticalStrut(10));
 
         // Kelas
-        JLabel lblKelas = new JLabel("Kelas :");
+        JLabel lblKelas = new JLabel();
+        registerAndSetText(lblKelas, "ui.pesertadidik.grade");
         lblKelas.setForeground(Color.WHITE);
         lblKelas.setFont(new Font("Segoe UI", Font.PLAIN, 12));
         lblKelas.setAlignmentX(Component.LEFT_ALIGNMENT);
@@ -146,22 +188,26 @@ public class PesertaDidikModule implements MasterDataModule {
         buttonPanel.setMaximumSize(new Dimension(Integer.MAX_VALUE, 70)); // Kunci tinggi panel tombol
         buttonPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
 
-        btnTambah = new JButton("Tambah");
+        btnTambah = new JButton();
+        registerAndSetText(btnTambah, "ui.pesertadidik.add");
         btnTambah.setFont(new Font("Segoe UI", Font.PLAIN, 12));
         btnTambah.addActionListener(e -> save());
         buttonPanel.add(btnTambah);
 
-        btnUpdate = new JButton("Update");
-        btnUpdate.setFont(new Font("Segoe UI", Font.PLAIN, 12));
-        btnUpdate.addActionListener(e -> update());
-        buttonPanel.add(btnUpdate);
-
-        btnDelete = new JButton("Delete");
+        btnDelete = new JButton();
+        registerAndSetText(btnDelete, "ui.pesertadidik.delete");
         btnDelete.setFont(new Font("Segoe UI", Font.PLAIN, 12));
         btnDelete.addActionListener(e -> delete());
         buttonPanel.add(btnDelete);
 
-        btnRefresh = new JButton("Refresh");
+        btnUpdate = new JButton();
+        registerAndSetText(btnUpdate, "ui.pesertadidik.update");
+        btnUpdate.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+        btnUpdate.addActionListener(e -> update());
+        buttonPanel.add(btnUpdate);
+
+        btnRefresh = new JButton();
+        registerAndSetText(btnRefresh, "ui.pesertadidik.refresh");
         btnRefresh.setFont(new Font("Segoe UI", Font.PLAIN, 12));
         btnRefresh.addActionListener(e -> refresh());
         buttonPanel.add(btnRefresh);
@@ -175,7 +221,8 @@ public class PesertaDidikModule implements MasterDataModule {
         searchPanel.setBackground(new Color(33, 37, 41));
         searchPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
 
-        JLabel lblCari = new JLabel("Cari Peserta :");
+        JLabel lblCari = new JLabel();
+        registerAndSetText(lblCari, "ui.pesertadidik.find");
         lblCari.setForeground(Color.WHITE);
         lblCari.setFont(new Font("Segoe UI", Font.PLAIN, 12));
         lblCari.setAlignmentX(Component.LEFT_ALIGNMENT);
@@ -210,7 +257,8 @@ public class PesertaDidikModule implements MasterDataModule {
         // Header Judul Atas
         JPanel headerPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
         headerPanel.setBackground(Color.WHITE);
-        JLabel headerLabel = new JLabel("Daftar Kartu Peserta Didik");
+        JLabel headerLabel = new JLabel();
+        registerAndSetText(headerLabel, "ui.pesertadidik.panelheader");
         headerLabel.setFont(new Font("Segoe UI", Font.BOLD, 16));
         headerPanel.add(headerLabel);
         tablePanel.add(headerPanel, BorderLayout.PAGE_START);
@@ -263,7 +311,7 @@ public class PesertaDidikModule implements MasterDataModule {
         // 4. Render Data
         if (daftarSiswa.isEmpty()) {
             cardsContainerPanel.setLayout(new BorderLayout()); // Ubah layout sementara
-            JLabel lblKosong = new JLabel("Data peserta didik tidak ditemukan.", SwingConstants.CENTER);
+            JLabel lblKosong = new JLabel(I18nServices.get("ui.pesertadidik.card.empty"), SwingConstants.CENTER);
             lblKosong.setFont(new java.awt.Font("Segoe UI", java.awt.Font.ITALIC, 14));
             lblKosong.setForeground(Color.GRAY);
             cardsContainerPanel.add(lblKosong, BorderLayout.CENTER);
@@ -296,12 +344,12 @@ public class PesertaDidikModule implements MasterDataModule {
                 dataPanel.setLayout(new GridLayout(4, 1, 0, 5));
                 dataPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
-                JLabel lbNama = new JLabel("Nama : " + (nama != null ? nama : "-"));
+                JLabel lbNama = new JLabel(String.format(I18nServices.get("ui.pesertadidik.card.nama"), (nama != null ? nama : "-")));
                 lbNama.setFont(new java.awt.Font("Segoe UI", java.awt.Font.BOLD, 14));
 
-                JLabel lbUID = new JLabel("UID : " + (uid != null ? uid : "-"));
-                JLabel lbIdPeserta = new JLabel("ID Peserta : " + (idsiswa != null ? idsiswa : "-"));
-                JLabel lbKelas = new JLabel("Kelas : " + (kelas != null ? kelas : "-"));
+                JLabel lbUID = new JLabel(String.format(I18nServices.get("ui.pesertadidik.card.uid"), (uid != null ? uid : "-")));
+                JLabel lbIdPeserta = new JLabel(String.format(I18nServices.get("ui.pesertadidik.card.id"), (idsiswa != null ? idsiswa : "-")));
+                JLabel lbKelas = new JLabel(String.format(I18nServices.get("ui.pesertadidik.card.kelas"), (kelas != null ? kelas : "-")));
 
                 dataPanel.add(lbNama);
                 dataPanel.add(lbUID);
@@ -313,8 +361,8 @@ public class PesertaDidikModule implements MasterDataModule {
                 actionPanel.setBackground(Color.WHITE);
                 actionPanel.setLayout(new FlowLayout(FlowLayout.RIGHT));
 
-                JButton btnEdit = new JButton("Edit");
-                JButton btnDelete = new JButton("Delete");
+                JButton btnEdit = new JButton(I18nServices.get("ui.pesertadidik.update"));
+                JButton btnDelete = new JButton(I18nServices.get("ui.pesertadidik.delete"));
 
                 btnEdit.setBackground(new Color(255, 153, 0));
                 btnEdit.setForeground(Color.WHITE);
@@ -335,22 +383,28 @@ public class PesertaDidikModule implements MasterDataModule {
                     btnUpdate.setEnabled(true);
                     btnTambah.setEnabled(false);
 
+                    //logging
                     System.out.println("Tombol Edit ditekan untuk: " + nama);
                 });
 
                 // ===== EVENT DELETE =====
                 btnDelete.addActionListener(e -> {
+                    // Ambil template kalimat, lalu isi %s dengan variabel nama
+                    String msgTemplate = I18nServices.get("ui.pesertadidik.alert.delete.confirm");
+                    String message = String.format(msgTemplate, nama);
+
                     int confirm = JOptionPane.showConfirmDialog(
                             cardsContainerPanel,
-                            "Yakin ingin menghapus data " + nama + "?",
-                            "Konfirmasi",
+                            message,
+                            I18nServices.get("ui.pesertadidik.alert.title.confirm"),
                             JOptionPane.YES_NO_OPTION
                     );
 
                     if (confirm == JOptionPane.YES_OPTION) {
                         pesertaService.hapusPesertaDidik(siswa.getIdsiswa());
                         loadTableData(); // Refresh UI Module dengan memanggil dirinya sendiri
-                        JOptionPane.showMessageDialog(cardsContainerPanel, "Data berhasil dihapus!");
+                        String successTemplate = I18nServices.get("ui.pesertadidik.alert.delete.success");
+                        JOptionPane.showMessageDialog(cardsContainerPanel, String.format(successTemplate, nama));
                     }
                 });
 
@@ -393,8 +447,8 @@ public class PesertaDidikModule implements MasterDataModule {
 
             JOptionPane.showMessageDialog(
                     null,
-                    "Semua field harus diisi!",
-                    "Warning",
+                    I18nServices.get("ui.pesertadidik.alert.validation.empty"),
+                    I18nServices.get("ui.alert.title.warning"),
                     JOptionPane.WARNING_MESSAGE
             );
             return;
@@ -420,8 +474,8 @@ public class PesertaDidikModule implements MasterDataModule {
 
         JOptionPane.showMessageDialog(
                 null,
-                "Data peserta berhasil ditambahkan!",
-                "Success",
+                I18nServices.get("ui.pesertadidik.alert.save.success"),
+                I18nServices.get("ui.pesertadidik.alert.title.success"),
                 JOptionPane.INFORMATION_MESSAGE
         );
 
@@ -439,8 +493,8 @@ public class PesertaDidikModule implements MasterDataModule {
         if (uid.isEmpty() || idPeserta.isEmpty() || nama.isEmpty() || kelas.isEmpty()) {
             JOptionPane.showMessageDialog(
                     null,
-                    "Semua field harus diisi!",
-                    "Warning",
+                    I18nServices.get("ui.pesertadidik.alert.validation.empty"),
+                    I18nServices.get("ui.alert.title.warning"),
                     JOptionPane.WARNING_MESSAGE
             );
             return;
@@ -469,8 +523,8 @@ public class PesertaDidikModule implements MasterDataModule {
 
             JOptionPane.showMessageDialog(
                     null,
-                    "Data peserta berhasil diupdate!",
-                    "Success",
+                    I18nServices.get("ui.pesertadidik.alert.update.success"),
+                    I18nServices.get("ui.pesertadidik.alert.title.success"),
                     JOptionPane.INFORMATION_MESSAGE
             );
 
@@ -478,12 +532,14 @@ public class PesertaDidikModule implements MasterDataModule {
             refresh();
 
         } catch (Exception e) {
+            String errorMsg = String.format(I18nServices.get("ui.pesertadidik.alert.error.prefix"), e.getMessage());
             JOptionPane.showMessageDialog(
                     null,
-                    "Gagal mengupdate data: " + e.getMessage(),
-                    "Error",
+                    errorMsg,
+                    I18nServices.get("ui.pesertadidik.alert.title.error"),
                     JOptionPane.ERROR_MESSAGE
             );
+            // logging
             System.err.println("✗ Error saat update UI: " + e.getMessage());
         }
     }
@@ -493,11 +549,21 @@ public class PesertaDidikModule implements MasterDataModule {
         String idPeserta = txtIdPeserta.getText().trim();
 
         if (idPeserta.isEmpty()) {
-            JOptionPane.showMessageDialog(null, "Pilih data peserta terlebih dahulu!", "Warning", JOptionPane.WARNING_MESSAGE);
+            JOptionPane.showMessageDialog(
+                    null,
+                    I18nServices.get("ui.pesertadidik.alert.validation.delete.empty"),
+                    I18nServices.get("ui.alert.title.warning"),
+                    JOptionPane.WARNING_MESSAGE
+            );
             return;
         }
 
-        int confirm = JOptionPane.showConfirmDialog(null, "Yakin ingin menghapus data ini?", "Konfirmasi", JOptionPane.YES_NO_OPTION);
+        int confirm = JOptionPane.showConfirmDialog(
+                null,
+                I18nServices.get("ui.pesertadidik.card.alert.delete.confirm"),
+                I18nServices.get("ui.pesertadidik.alert.title.confirm"),
+                JOptionPane.YES_NO_OPTION
+        );
         if (confirm == JOptionPane.YES_OPTION) {
             try {
                 // Enkripsi dulu idPeserta dari textfield sebelum dikirim ke service (karena database pakai ID terenkripsi)
@@ -506,10 +572,21 @@ public class PesertaDidikModule implements MasterDataModule {
                 // Eksekusi hapus ke database
                 pesertaService.hapusPesertaDidik(encryptedId);
 
-                JOptionPane.showMessageDialog(null, "Data peserta berhasil dihapus!", "Success", JOptionPane.INFORMATION_MESSAGE);
+                JOptionPane.showMessageDialog(
+                        null,
+                        I18nServices.get("ui.pesertadidik.card.alert.delete.success"),
+                        I18nServices.get("ui.pesertadidik.alert.title.success"),
+                        JOptionPane.INFORMATION_MESSAGE);
                 refresh(); // Bersihkan form dan load ulang tabel
             } catch (Exception e) {
-                JOptionPane.showMessageDialog(null, "Gagal menghapus data: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+                // 4. Alert Error (Menggunakan String.format untuk menggabungkan pesan error sistem)
+                String errorMsg = String.format(I18nServices.get("ui.pesertadidik.alert.error.prefix"), e.getMessage());
+                JOptionPane.showMessageDialog(
+                        null, 
+                        errorMsg, 
+                        I18nServices.get("ui.pesertadidik.alert.title.error"), 
+                        JOptionPane.ERROR_MESSAGE
+                );
             }
         }
     }
@@ -522,5 +599,28 @@ public class PesertaDidikModule implements MasterDataModule {
         cboKelas.setSelectedIndex(0);
         txtSearch.setText("");
         loadTableData();
+    }
+
+    @Override
+    public void onLanguageChanged() {
+        SwingUtilities.invokeLater(() -> {
+            // 1. Looping otomatis update semua Label dan Button yang terdaftar
+            for (I18nCompRef ref : localizedComponents) {
+                if (ref.component instanceof JLabel) {
+                    ((JLabel) ref.component).setText(I18nServices.get(ref.i18nKey));
+                } else if (ref.component instanceof JButton) {
+                    ((JButton) ref.component).setText(I18nServices.get(ref.i18nKey));
+                }
+            }
+
+            // 2. Khusus untuk kartu mahasiswa di dalam grid, kita render ulang datanya
+            loadTableData();
+
+            // 3. Refresh visual
+            if (cardsContainerPanel != null) {
+                cardsContainerPanel.revalidate();
+                cardsContainerPanel.repaint();
+            }
+        });
     }
 }

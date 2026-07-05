@@ -8,12 +8,13 @@ import javax.swing.JOptionPane;
 import util.EncryptionUtils;
 import util.SecurityUtils;
 import service.authservice;
+import service.I18nServices;
 
 /**
  *
  * @author Lenovo
  */
-public class Login extends javax.swing.JFrame {
+public class Login extends javax.swing.JFrame implements I18nServices.I18nChangeListener{
 
     private static final java.util.logging.Logger logger = java.util.logging.Logger.getLogger(Login.class.getName());
 
@@ -22,16 +23,41 @@ public class Login extends javax.swing.JFrame {
      */
     public Login() {
         initComponents();
+        setLocationRelativeTo(null);
+        
+        // 3. DAFTARKAN FORM LOGIN INI KE SERVICE
+        I18nServices.registerListener(this);
+        
+        // 4. JALANKAN FUNGSI UPDATE BAHASA SAAT AWAL FORM DIBUAT
+        updateLanguage();
+    }
+    
+    /**
+     * 5. BUAT FUNGSI KHUSUS UNTUK MENIMPA TEKS LABEL
+     */
+    private void updateLanguage() {
+        jLabel5.setText(I18nServices.get("login.welcome"));
+        jLabel6.setText(I18nServices.get("login.instruction1"));
+        jLabel7.setText(I18nServices.get("login.instruction2"));
+        jLabel1.setText(I18nServices.get("login.header"));
+        jLabel2.setText(I18nServices.get("login.label.username"));
+        jLabel3.setText(I18nServices.get("login.label.password"));
+        btnlogin.setText(I18nServices.get("login.button"));
+    }
+    
+    @Override
+    public void onLanguageChanged() {
+        updateLanguage();
     }
 
     private void doLogin() {
         String username = txtusername.getText();
         String password = new String(txtpassword.getPassword());
         if (username.isEmpty()) {
-            JOptionPane.showMessageDialog(this, "Mohon isi Username Anda");
+            JOptionPane.showMessageDialog(this, I18nServices.get("login.alert.username"));
             txtusername.requestFocus();
         } else if (password.isEmpty()) {
-            JOptionPane.showMessageDialog(this, "Mohon isi Password Anda");
+            JOptionPane.showMessageDialog(this, I18nServices.get("login.alert.password"));
             txtpassword.requestFocus();
         } else {
             authservice guruservice = new authservice();
@@ -87,23 +113,24 @@ public class Login extends javax.swing.JFrame {
         jPanel2Layout.setHorizontalGroup(
             jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel2Layout.createSequentialGroup()
-                .addGap(27, 27, 27)
-                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                    .addComponent(jLabel5, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(jLabel6, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(jLabel7, javax.swing.GroupLayout.DEFAULT_SIZE, 234, Short.MAX_VALUE))
+                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(jPanel2Layout.createSequentialGroup()
+                        .addGap(27, 27, 27)
+                        .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                            .addComponent(jLabel5, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addComponent(jLabel6, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addComponent(jLabel7, javax.swing.GroupLayout.DEFAULT_SIZE, 234, Short.MAX_VALUE)))
+                    .addGroup(jPanel2Layout.createSequentialGroup()
+                        .addGap(77, 77, 77)
+                        .addComponent(jLabel4, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
                 .addContainerGap(39, Short.MAX_VALUE))
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel2Layout.createSequentialGroup()
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addComponent(jLabel4, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(83, 83, 83))
         );
         jPanel2Layout.setVerticalGroup(
             jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel2Layout.createSequentialGroup()
-                .addGap(93, 93, 93)
+                .addGap(96, 96, 96)
                 .addComponent(jLabel4, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(62, 62, 62)
+                .addGap(59, 59, 59)
                 .addComponent(jLabel5, javax.swing.GroupLayout.PREFERRED_SIZE, 41, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(18, 18, 18)
                 .addComponent(jLabel6, javax.swing.GroupLayout.PREFERRED_SIZE, 41, javax.swing.GroupLayout.PREFERRED_SIZE)
