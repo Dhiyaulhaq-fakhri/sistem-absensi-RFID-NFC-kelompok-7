@@ -10,6 +10,8 @@ import gui.Adminpanel;
 import javax.swing.*;
 import java.awt.*;
 import javax.swing.border.EmptyBorder;
+import service.I18nServices; 
+import java.util.ArrayList;
 
 /**
  *
@@ -24,6 +26,21 @@ public class SidebarMenuPanel extends JPanel {
     private final Color BUTTON_HOVER = new Color(37, 99, 235);   // Warna saat mouse mendekat
     private final Color BUTTON_ACTIVE = new Color(59, 130, 246); // Warna menu aktif
     private final Color TEXT_COLOR = Color.WHITE;
+    
+    // List pembantu untuk mencatat komponen di Sidebar
+    private final java.util.List<I18nCompRef> localizedComponents = new ArrayList<>();
+    
+    private static class I18nCompRef {
+        JButton button;
+        String i18nKey;
+        boolean isHeader; // Untuk membedakan header accordion dan item biasa jika perlu
+
+        I18nCompRef(JButton button, String i18nKey, boolean isHeader) {
+            this.button = button;
+            this.i18nKey = i18nKey;
+            this.isHeader = isHeader;
+        }
+    }
 
     public SidebarMenuPanel() {
         setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
@@ -31,22 +48,22 @@ public class SidebarMenuPanel extends JPanel {
         setBorder(new EmptyBorder(5, 5, 5, 5));
 
         this.add(createAccordion(
-                "Data Master",
-                new String[]{"Guru", "Peserta Didik"}
+                "ui.sidebarpanel.master",
+                new String[]{"ui.sidebarpanel.master.teacher", "ui.sidebarpanel.master.student"}
         ));
         add(Box.createVerticalStrut(5));
 
         // 2. KELOMPOK ATTENDANCE (Halaman absensi / KiosK)
         this.add(createAccordion(
-                "Attendance",
-                new String[]{"KiosK", "Riwayat", "Analisis"}
+                "ui.sidebarpanel.attendance",
+                new String[]{"ui.sidebarpanel.attendance.kiosk", "ui.sidebarpanel.attendance.riwayat", "ui.sidebarpanel.attendance.analisis"}
         ));
         add(Box.createVerticalStrut(5));
 
         // 3. KELOMPOK SETTINGS
         this.add(createAccordion(
-                "Settings",
-                new String[]{"General", "Security"}
+                "ui.sidebarpanel.settings",
+                new String[]{"ui.sidebarpanel.settings.general", "ui.sidebarpanel.settings.security"}
         ));
         add(Box.createVerticalStrut(5));
 
@@ -57,13 +74,15 @@ public class SidebarMenuPanel extends JPanel {
     }
 
 
-    private JPanel createAccordion(String title, String[] menus) {
+    private JPanel createAccordion(String headerKey, String[] menuKeys) {
         JPanel container = new JPanel();
         container.setLayout(new BoxLayout(container, BoxLayout.Y_AXIS));
         container.setBackground(new Color(33, 37, 41));
+        
+        // HEADER BUTTON (Daftarkan ke I18n)
+        JButton header = new JButton(I18nServices.get(headerKey));
+        localizedComponents.add(new I18nCompRef(header, headerKey, true));
 
-        // HEADER BUTTON (Tombol Kategori Utama)
-        JButton header = new JButton(title);
         header.setFocusPainted(false);
         header.setBackground(HEADER_BG);
         header.setForeground(TEXT_COLOR);
@@ -78,8 +97,11 @@ public class SidebarMenuPanel extends JPanel {
         body.setBackground(new Color(30, 41, 59));
         body.setVisible(false);
 
-        for (String menu : menus) {
-            JButton btn = new JButton(menu);
+        for (String menuKey : menuKeys) {
+            // Ambil teks terjemahan untuk nama tombol fisik
+            JButton btn = new JButton(I18nServices.get(menuKey));
+            localizedComponents.add(new I18nCompRef(btn, menuKey, false));
+            
             btn.setFocusPainted(false);
             btn.setMaximumSize(new Dimension(Integer.MAX_VALUE, 45));
             btn.setBackground(SUBMENU_BG);
@@ -103,7 +125,7 @@ public class SidebarMenuPanel extends JPanel {
 
         // Click action
         btn.addActionListener(e -> {
-                switchModule(menu, btn);
+                switchModule(menuKey, btn);
             });
 
             body.add(btn);
@@ -122,8 +144,8 @@ public class SidebarMenuPanel extends JPanel {
         return container;
     }
 
-    private void switchModule(String moduleName, JButton btn) {
-        System.out.println("====== 🟢 TRACE: switchModule dipicu untuk " + moduleName + " ======");
+    private void switchModule(String moduleKey, JButton btn) {
+        System.out.println("====== 🟢 TRACE: switchModule dipicu untuk " + moduleKey + " ======");
         
         // Reset warna tombol aktif lama ke warna default submenu
         if (activeButton != null) {
@@ -134,8 +156,18 @@ public class SidebarMenuPanel extends JPanel {
         activeButton = btn;
         btn.setBackground(BUTTON_ACTIVE);
         
+        // Memetakan i18n key ke string nama modul riil di Factory
+        String targetModule = "";
+        if (moduleKey.equals("ui.sidebarpanel.master.teacher")) targetModule = "Guru";
+        else if (moduleKey.equals("ui.sidebarpanel.master.student")) targetModule = "Peserta Didik";
+        else if (moduleKey.equals("ui.sidebarpanel.attendance.kiosk")) targetModule = "KiosK";
+        else if (moduleKey.equals("ui.sidebarpanel.attendance.riwayat")) targetModule = "Riwayat";
+        else if (moduleKey.equals("ui.sidebarpanel.attendance.analisis")) targetModule = "Analisis";
+        else if (moduleKey.equals("ui.sidebarpanel.settings.general")) targetModule = "General";
+        else if (moduleKey.equals("ui.sidebarpanel.settings.security")) targetModule = "Security";
+        
         // Panggil Module dari Factory
-        MasterDataModule module = ModuleFactory.getModule(moduleName);
+        MasterDataModule module = ModuleFactory.getModule(targetModule);
         
         if (module != null) {
             System.out.println("   -> Modul berhasil diambil dari Factory");
@@ -151,7 +183,7 @@ public class SidebarMenuPanel extends JPanel {
             // Perbarui tabel data di panel tengah (jPanel3)
             updateContentPanel(module.getTablePanel());
         } else {
-            System.out.println("   -> ❌ ERROR: Modul " + moduleName + " tidak ditemukan di ModuleFactory!");
+            System.out.println("   -> ❌ ERROR: Modul " + moduleKey + " tidak ditemukan di ModuleFactory!");
         }
     }
     
@@ -175,5 +207,19 @@ public class SidebarMenuPanel extends JPanel {
 
         Adminpanel.jPanel3.revalidate();
         Adminpanel.jPanel3.repaint();
+    }
+    
+    // Panggil method ini saat ada trigger perubahan bahasa global di aplikasi Anda
+    public void onLanguageChanged() {
+        SwingUtilities.invokeLater(() -> {
+            // Jalankan perulangan otomatis update text tombol sidebar terdaftar
+            for (I18nCompRef ref : localizedComponents) {
+                ref.button.setText(I18nServices.get(ref.i18nKey));
+            }
+            
+            // Refresh Visual Layout Sidebar
+            this.revalidate();
+            this.repaint();
+        });
     }
 }
