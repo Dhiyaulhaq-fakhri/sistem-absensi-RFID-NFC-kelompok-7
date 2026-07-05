@@ -9,6 +9,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.prefs.Preferences;
 import pallete.SlidingStatusToggle;
+import pallete.SlidingLanguageToggle;
 
 /**
  *
@@ -27,6 +28,7 @@ public class SettingsModule implements MasterDataModule {
     private JPanel jPanel5;
     private JPanel jPanel6;
     private pallete.SlidingStatusToggle slidingStatusToggle1;
+    private pallete.SlidingLanguageToggle slidingLanguageToggle1;
 
     @Override
     public String getModuleName() {
@@ -60,8 +62,33 @@ public class SettingsModule implements MasterDataModule {
         // Inisialisasi Komponen Utama
         jPanel1 = new JPanel();
         jPanel3 = new JPanel();
-        slidingStatusToggle1 = new pallete.SlidingStatusToggle();
         jPanel4 = new JPanel();
+        jPanel5 = new JPanel();
+        jPanel6 = new JPanel();
+
+        slidingStatusToggle1 = new SlidingStatusToggle();
+        slidingLanguageToggle1 = new SlidingLanguageToggle();
+        // ===============================
+        // Panel Bahasa
+        // ===============================
+        jPanel4.setLayout(new GridBagLayout());
+
+        jPanel4.setBorder(BorderFactory.createTitledBorder(
+                BorderFactory.createLineBorder(new Color(180, 180, 180), 1, true),
+                "Bahasa Aplikasi",
+                javax.swing.border.TitledBorder.CENTER,
+                javax.swing.border.TitledBorder.DEFAULT_POSITION,
+                new Font("Segoe UI", Font.BOLD, 14)
+        ));
+
+        slidingLanguageToggle1.setPreferredSize(new Dimension(320, 50));
+
+        GridBagConstraints gbcLanguage = new GridBagConstraints();
+        gbcLanguage.gridx = 0;
+        gbcLanguage.gridy = 0;
+        gbcLanguage.anchor = GridBagConstraints.CENTER;
+
+        jPanel4.add(slidingLanguageToggle1, gbcLanguage);
         jPanel5 = new JPanel();
         jPanel6 = new JPanel();
 
