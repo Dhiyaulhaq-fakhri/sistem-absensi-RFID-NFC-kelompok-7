@@ -72,9 +72,14 @@ public class SlidingLanguageToggle extends JToggleButton implements I18nServices
                 // Update posisi visual slider internal
                 setSelectedLanguageIndex(targetIndex);
                 
-                // LANGSUNG PREVENT ERROR: Ubah locale global via service dosen
+                // Ubah locale global via service i18n menggunakan instansiasi standar Java yang aman
                 try {
-                    I18nServices.setLocale(Locale.of(langcodes[targetIndex]));
+                    I18nServices.setLocale(new Locale(langcodes[targetIndex]));
+                    
+                    // Memicu ActionEvent agar didengar oleh SettingsModule (addActionListener)
+                    fireActionPerformed(new java.awt.event.ActionEvent(SlidingLanguageToggle.this, 
+                            java.awt.event.ActionEvent.ACTION_PERFORMED, "LanguageChanged"));
+                            
                 } catch (Exception ex) {
                     System.err.println("Gagal mengubah bahasa lewat toggle: " + ex.getMessage());
                 }

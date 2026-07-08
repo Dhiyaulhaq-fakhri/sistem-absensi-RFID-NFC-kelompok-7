@@ -14,6 +14,7 @@ import service.DigitalClockService;
 import service.pesertadidikservice;
 import service.LogAbsensiService;
 import service.SerialService;
+import service.I18nServices;
 import objects.pesertadidik;
 import java.util.prefs.Preferences;
 
@@ -43,7 +44,7 @@ public class AttendanceModule implements MasterDataModule {
 
     @Override
     public String getModuleName() {
-        return "Absensi Peserta Didik";
+        return I18nServices.get("ui.attendance.modulename");
     }
 
     /**
@@ -58,7 +59,7 @@ public class AttendanceModule implements MasterDataModule {
         // Opsional: Jika ingin benar-benar kosong, biarkan tanpa komponen.
         // Di bawah ini ditambahkan label samar hanya agar tidak terlalu hampa.
         panel.setLayout(new BorderLayout());
-        JLabel lblInfo = new JLabel("MODE KIOSK AKTIF", SwingConstants.CENTER);
+        JLabel lblInfo = new JLabel(I18nServices.get("ui.attendance.kioskmode"), SwingConstants.CENTER);
         lblInfo.setFont(new Font("Segoe UI", Font.BOLD, 12));
         lblInfo.setForeground(new Color(100, 110, 120));
         panel.add(lblInfo, BorderLayout.NORTH);
@@ -82,11 +83,11 @@ public class AttendanceModule implements MasterDataModule {
         headerPanel.setBackground(new Color(226, 211, 188)); // Warna krem pastel dari kode awalmu
         headerPanel.setBorder(BorderFactory.createEmptyBorder(15, 20, 15, 20));
 
-        JLabel lblTitle = new JLabel("KIOSK ABSENSI");
+        JLabel lblTitle = new JLabel(I18nServices.get("ui.attendance.title"));
         lblTitle.setFont(new Font("Segoe UI", Font.BOLD, 20));
         lblTitle.setForeground(new Color(104, 23, 39));
 
-        lblJam = new JLabel("Memuat waktu...");
+        lblJam = new JLabel(I18nServices.get("ui.attendance.loadingtime"));
         lblJam.setFont(new Font("Segoe UI", Font.BOLD, 22));
         lblJam.setForeground(new Color(104, 23, 39));
 
@@ -105,14 +106,14 @@ public class AttendanceModule implements MasterDataModule {
         JPanel testingPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 10));
         testingPanel.setBackground(new Color(240, 240, 240));
 
-        JLabel lblTestingLabel = new JLabel("Test Manual UID:");
+        JLabel lblTestingLabel = new JLabel(I18nServices.get("ui.attendance.testuid"));
         lblTestingLabel.setFont(new Font("Segoe UI", Font.BOLD, 11));
 
         txtUidTesting = new JTextField(20);
         txtUidTesting.setFont(new Font("Segoe UI", Font.PLAIN, 12));
         txtUidTesting.setToolTipText("Masukkan UID atau hashed UID untuk testing");
 
-        btnTapSimulation = new JButton("Simulasi Tap");
+        btnTapSimulation = new JButton(I18nServices.get("ui.attendance.btn.simulasi"));
         btnTapSimulation.setFont(new Font("Segoe UI", Font.BOLD, 11));
         btnTapSimulation.setBackground(new Color(104, 23, 39));
         btnTapSimulation.setForeground(Color.WHITE);
@@ -139,7 +140,7 @@ public class AttendanceModule implements MasterDataModule {
                 BorderFactory.createEmptyBorder(30, 40, 30, 40)
         ));
 
-        JLabel lblPetunjuk = new JLabel("Silakan Tap Kartu Anda");
+        JLabel lblPetunjuk = new JLabel(I18nServices.get("ui.attendance.instruction"));
         lblPetunjuk.setFont(new Font("Segoe UI", Font.BOLD, 18));
         lblPetunjuk.setAlignmentX(Component.CENTER_ALIGNMENT);
         kioskCard.add(lblPetunjuk);
@@ -169,14 +170,14 @@ public class AttendanceModule implements MasterDataModule {
         infoSiswaTextPanel.setBackground(new Color(52, 58, 64));
         infoSiswaTextPanel.setBorder(BorderFactory.createEmptyBorder(0, 15, 0, 0));
 
-        lblNamaSiswa = new JLabel("Nama Lengkap: -");
+        lblNamaSiswa = new JLabel(String.format(I18nServices.get("ui.attendance.lbl.nama"), "-"));
         lblNamaSiswa.setForeground(Color.WHITE);
         lblNamaSiswa.setFont(new Font("Segoe UI", Font.BOLD, 13));
 
-        lblIdSiswa = new JLabel("ID Peserta: -");
+        lblIdSiswa = new JLabel(String.format(I18nServices.get("ui.attendance.lbl.id"), "-"));
         lblIdSiswa.setForeground(Color.WHITE);
 
-        lblKelasSiswa = new JLabel("Kelas: -");
+        lblKelasSiswa = new JLabel(String.format(I18nServices.get("ui.attendance.lbl.kelas"), "-"));
         lblKelasSiswa.setForeground(Color.WHITE);
 
         infoSiswaTextPanel.add(lblNamaSiswa);
@@ -188,7 +189,7 @@ public class AttendanceModule implements MasterDataModule {
         kioskCard.add(Box.createVerticalStrut(20));
 
         // Label Status Tap (Berubah warna dinamis dinotifikasi)
-        lblStatusTap = new JLabel("STANDBY", SwingConstants.CENTER);
+        lblStatusTap = new JLabel(I18nServices.get("ui.attendance.status.standby"), SwingConstants.CENTER);
         lblStatusTap.setFont(new Font("Segoe UI", Font.BOLD, 14));
         lblStatusTap.setForeground(Color.WHITE);
         lblStatusTap.setBackground(new Color(104, 23, 39));
@@ -263,17 +264,18 @@ public class AttendanceModule implements MasterDataModule {
                     System.out.println("✓ Peserta ditemukan: " + p.getNamaLengkap());
 
                     // Masukkan data dari objek 'pesertadidik' ke Label masing-masing
-                    lblNamaSiswa.setText("Nama Lengkap: " + p.getNamaLengkap());
-                    lblIdSiswa.setText("ID Peserta: " + EncryptionUtils.decrypt(p.getIdsiswa()));
-                    lblKelasSiswa.setText("Kelas: " + p.getKelas());
-
+                    lblNamaSiswa.setText(String.format(I18nServices.get("ui.attendance.lbl.nama"), p.getNamaLengkap()));
+                    lblIdSiswa.setText(String.format(I18nServices.get("ui.attendance.lbl.id"), EncryptionUtils.decrypt(p.getIdsiswa())));
+                    lblKelasSiswa.setText(String.format(I18nServices.get("ui.attendance.lbl.kelas"), p.getKelas()));
+                    
                     // Ganti warna avatar jadi hijau tanda sukses
                     lblAvatar.setBackground(new Color(25, 135, 84));
                     lblAvatar.setText("OK");
 
                     // Update label status paling bawah dengan pesan sukses & warna hijau
                     lblStatusTap.setBackground(new Color(25, 135, 84));
-                    updateLabelWithDelay(lblStatusTap, "ABSENSI (" + statusMode.toUpperCase() + ") DITERIMA");
+                    String successMessage = String.format(I18nServices.get("ui.attendance.status.success"), statusMode.toUpperCase());
+                    updateLabelWithDelay(lblStatusTap, successMessage);
                 } else {
                     System.out.println("✗ Peserta TIDAK ditemukan di database");
 
@@ -281,7 +283,7 @@ public class AttendanceModule implements MasterDataModule {
                     lblAvatar.setBackground(new Color(220, 53, 69)); // Merah
                     lblAvatar.setText("ERR");
                     lblStatusTap.setBackground(new Color(220, 53, 69));
-                    updateLabelWithDelay(lblStatusTap, "KARTU TIDAK TERDAFTAR!");
+                    updateLabelWithDelay(lblStatusTap, I18nServices.get("ui.attendance.status.notfound"));
                 }
             });
 
@@ -317,11 +319,11 @@ public class AttendanceModule implements MasterDataModule {
 
                 SwingUtilities.invokeLater(() -> {
                     // Kembalikan ke kondisi Standby awal
-                    lblStatusTap.setText("STANDBY");
-                    lblStatusTap.setBackground(new Color(104, 23, 39)); // Warna merah marun awal
-                    lblNamaSiswa.setText("Nama Lengkap: -");
-                    lblIdSiswa.setText("ID Peserta: -");
-                    lblKelasSiswa.setText("Kelas: -");
+                    lblStatusTap.setText(I18nServices.get("ui.attendance.status.standby"));
+                    lblStatusTap.setBackground(new Color(104, 23, 39));
+                    lblNamaSiswa.setText(String.format(I18nServices.get("ui.attendance.lbl.nama"), "-"));
+                    lblIdSiswa.setText(String.format(I18nServices.get("ui.attendance.lbl.id"), "-"));
+                    lblKelasSiswa.setText(String.format(I18nServices.get("ui.attendance.lbl.kelas"), "-"));
                     lblAvatar.setBackground(new Color(108, 117, 125));
                     lblAvatar.setText("No Card");
                 });
@@ -365,7 +367,7 @@ public class AttendanceModule implements MasterDataModule {
 
         if (uid.isEmpty()) {
             lblStatusTap.setBackground(new Color(220, 53, 69));
-            updateLabelWithDelay(lblStatusTap, "MASUKKAN UID TERLEBIH DAHULU!");
+            updateLabelWithDelay(lblStatusTap, I18nServices.get("ui.attendance.status.emptyuid"));
             return;
         }
 

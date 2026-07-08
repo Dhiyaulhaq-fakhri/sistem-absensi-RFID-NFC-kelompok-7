@@ -12,6 +12,7 @@ import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.RenderingHints;
 import javax.swing.JToggleButton;
+import service.I18nServices;
 /**
  *
  * @author Lenovo
@@ -46,7 +47,7 @@ public class SlidingStatusToggle extends JToggleButton {
      * @param status
      */
     public void setStatusByString(String status) {
-        if ("Pulang".equalsIgnoreCase(status)) {
+        if ("Pulang".equalsIgnoreCase(status) || "Out".equalsIgnoreCase(status) || "Abwesend".equalsIgnoreCase(status)) {
             this.setSelected(true);  // Geser ke Kanan (Pulang)
         } else {
             this.setSelected(false); // Geser ke Kiri (Masuk)
@@ -72,7 +73,7 @@ public class SlidingStatusToggle extends JToggleButton {
 
         int w = getWidth();
         int h = getHeight();
-        int margin = 5; // Jarak/Padding antara slider dalam dengan pembungkus luar
+        int margin = 5;
         int sliderWidth = (w / 2) - margin;
         int sliderHeight = h - (margin * 2);
 
@@ -96,7 +97,7 @@ public class SlidingStatusToggle extends JToggleButton {
         int textY = (h / 2) + (fm.getAscent() / 2) - 2; // Sumbu Y presisi di tengah vertikal
 
         // Teks Sisi Kiri -> MASUK
-        String textLeft = "Masuk";
+        String textLeft = I18nServices.get("ui.toggle.status.in");
         int textLeftX = (w / 4) - (fm.stringWidth(textLeft) / 2); // Presisi tengah di area kiri
 
         // Jika aktif di kiri, teks berwarna putih terang. Jika tidak, abu-abu redup.
@@ -104,7 +105,7 @@ public class SlidingStatusToggle extends JToggleButton {
         g2.drawString(textLeft, textLeftX, textY);
 
         // Teks Sisi Kanan -> PULANG
-        String textRight = "Pulang";
+        String textRight = I18nServices.get("ui.toggle.status.out");
         int textRightX = ((w / 4) * 3) - (fm.stringWidth(textRight) / 2); // Presisi tengah di area kanan
 
         // Jika aktif di kanan, teks berwarna putih terang. Jika tidak, abu-abu redup.
