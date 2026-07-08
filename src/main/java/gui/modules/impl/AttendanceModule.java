@@ -342,18 +342,12 @@ public class AttendanceModule implements MasterDataModule {
      * Jam digital lokal sederhana menggunakan Background Thread standard Java.
      */
     private void initClockEngine() {
-        DigitalClockService service = new DigitalClockService(lblJam, "EEEE, d MMMM yyyy, HH:mm:ss");
+        String patternJamAdaptif = "EEEE, dd MMMM yyyy - HH:mm:ss";
+        DigitalClockService service = new DigitalClockService(lblJam, patternJamAdaptif);
 
-        // 1. Ambil objek thread dari service
         clockThread = service.getThread();
-
-        // 2. Beri nama secara mandiri untuk debugging/tracking
         clockThread.setName("Thread-Jam-Kiosk");
-
-        // 3. Atur daemon secara mandiri sebelum start [Conversation History]
         clockThread.setDaemon(true);
-
-        // 4. Jalankan thread (Fase New -> Runnable) [3]
         clockThread.start();
 
         System.out.println("Memulai: " + clockThread.getName() + " (Daemon: " + clockThread.isDaemon() + ")");

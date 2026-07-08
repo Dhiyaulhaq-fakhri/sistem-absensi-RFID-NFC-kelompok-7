@@ -24,10 +24,16 @@ public class DigitalClockService {
     
      public Thread getThread() {
         Runnable clockTask = () -> {
-            DateTimeFormatter formatter = DateTimeFormatter.ofPattern(pattern, Locale.of("id", "ID"));
             try {
                 while (!Thread.currentThread().isInterrupted()) {
                     LocalDateTime now = LocalDateTime.now();
+                    
+                    Locale currentLocale = I18nServices.getCurrentLocale();
+                    if (currentLocale == null) {
+                        currentLocale = new Locale("id", "ID"); // Fallback jika null
+                    }
+                    
+                    DateTimeFormatter formatter = DateTimeFormatter.ofPattern(pattern, currentLocale);
                     String timeFormatted = now.format(formatter);
                     
                     // Update label secara asinkron
