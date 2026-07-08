@@ -486,6 +486,10 @@ public class PesertaDidikModule implements MasterDataModule, I18nServices.I18nCh
     public void update() {
         String uid = txtUID.getText();
         String idPeserta = txtIdPeserta.getText();
+
+        txtUID.setEditable(false);
+        txtIdPeserta.setEditable(false);
+
         String nama = txtNama.getText();
         String kelas = cboKelas.getSelectedItem() != null ? cboKelas.getSelectedItem().toString() : "";
 
@@ -582,9 +586,9 @@ public class PesertaDidikModule implements MasterDataModule, I18nServices.I18nCh
                 // 4. Alert Error (Menggunakan String.format untuk menggabungkan pesan error sistem)
                 String errorMsg = String.format(I18nServices.get("ui.pesertadidik.alert.error.prefix"), e.getMessage());
                 JOptionPane.showMessageDialog(
-                        null, 
-                        errorMsg, 
-                        I18nServices.get("ui.pesertadidik.alert.title.error"), 
+                        null,
+                        errorMsg,
+                        I18nServices.get("ui.pesertadidik.alert.title.error"),
                         JOptionPane.ERROR_MESSAGE
                 );
             }
@@ -598,6 +602,10 @@ public class PesertaDidikModule implements MasterDataModule, I18nServices.I18nCh
         txtNama.setText("");
         cboKelas.setSelectedIndex(0);
         txtSearch.setText("");
+        txtUID.setEditable(true);
+        txtIdPeserta.setEditable(true);
+        btnUpdate.setEnabled(false);
+        btnTambah.setEnabled(true);
         loadTableData();
     }
 
